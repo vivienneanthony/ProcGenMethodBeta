@@ -7,6 +7,9 @@
 // RuntimeMeshComponent Headers
 #include "RuntimeMeshProvider.h"
 
+// Add Marching cube
+#include "../MarchingCube/MeshMarchingCube.h"
+
 // Generated file
 #include "RuntimeProviderSphereTerrain.generated.h"
 
@@ -17,5 +20,35 @@ class PROCGENMETHODBETA_API URuntimeProviderSphereTerrain : public URuntimeMeshP
 	// Generate Body
 	GENERATED_BODY()
 
-	public:
+public:
+	UPROPERTY()
+	int32 MaxLOD;
+
+	UPROPERTY(Category = "RuntimeMesh|Providers|Sphere", VisibleAnywhere, BlueprintGetter = GetSphereRadius, BlueprintSetter = SetSphereRadius)
+	float SphereRadius;
+
+	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
+	float GetSphereRadius() const;
+
+	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
+	void SetSphereRadius(float InSphereRadius);
+
+	UPROPERTY()
+	UMeshMarchingCube *ptrMarchingCube = nullptr;
+
+protected:
+	// Initialize
+	virtual void Initialize() override;
+
+	// Get Bounds
+	virtual FBoxSphereBounds GetBounds() override;
+
+	// Is safe
+	virtual bool IsThreadSafe() override;
+
+	// Get section Mesh
+	virtual bool GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData) override;
+
+private:
+	mutable FCriticalSection PropertySyncRoot;
 };

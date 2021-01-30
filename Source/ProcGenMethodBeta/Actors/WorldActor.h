@@ -85,6 +85,8 @@ protected:
 
 	void TestStaticProvider();
 
+	void TestProviderSphereTerrain();
+
 	// Mesh Marching Cube
 	UMeshMarchingCube * component_MC = nullptr;
 

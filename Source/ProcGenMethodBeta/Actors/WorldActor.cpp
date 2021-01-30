@@ -4,6 +4,7 @@
 
 #include "Providers/RuntimeMeshProviderSphere.h"
 #include "Providers/RuntimeMeshProviderStatic.h"
+#include "../RuntimeProvider/RuntimeProviderSphereTerrain.h"
 
 #include <cstdlib>
 
@@ -36,16 +37,16 @@ void AWorldActor::BeginPlay()
 	}
 
 	// Copy defaults
-	SetMarchingCubeNoiseDefaults();
+	//SetMarchingCubeNoiseDefaults();
 
 	// Initialize Grid Data
-	component_MC->InitializeNoiseGridData();
+	//component_MC->InitializeNoiseGridData();
 
 	// CreateData
-	component_MC->Polygonization();
+	//component_MC->Polygonization();
 
 	// Test static
-	TestStaticProvider();
+	TestProviderSphereTerrain();
 }
 
 // Called every frame
@@ -101,6 +102,29 @@ void AWorldActor::TestBoxProvider()
 	}
 }
 
+void AWorldActor::TestProviderSphereTerrain()
+{
+	// Fail safe if no mesh data is generated
+	if (component_MC->GetVerticesData().Num() <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Mesh Data Generated"));
+		return;
+	}
+
+	// Use Runtime Mesh Terraini to produce mesh
+	URuntimeProviderSphereTerrain *SphereTerrainProvider = NewObject<URuntimeProviderSphereTerrain>(this, TEXT("RuntimeProviderSphereTerrain "));
+
+	// Sphere
+	if (SphereTerrainProvider)
+	{
+		if (component_RMC)
+		{
+			// test initialize
+			component_RMC->Initialize(SphereTerrainProvider);
+		}
+	}
+}
+
 // Test
 void AWorldActor::TestStaticProvider()
 {
@@ -120,9 +144,8 @@ void AWorldActor::TestStaticProvider()
 			// test initialize
 			component_RMC->Initialize(StaticProvider);
 
-			
 			StaticProvider->SetupMaterialSlot(0, TEXT("TriMat"), Material);
-			
+
 			// This creates 3 vertex colors
 			TArray<FColor> Colors{FColor::Blue, FColor::Red, FColor::Green};
 
