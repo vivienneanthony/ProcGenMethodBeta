@@ -24,7 +24,7 @@ class PROCGENMETHODBETA_API UMeshMarchingCube : public UObject
 public:
 	// Constructor
 	UMeshMarchingCube();
-	
+
 	// Fill Grid values from perlin noise
 	UFUNCTION(BlueprintCallable)
 	void InitializeNoiseGridData();
@@ -32,26 +32,46 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Polygonization();
 
-	// First Noise
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	EFastNoise_NoiseType noiseType = EFastNoise_NoiseType::Simplex;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	EFastNoise_FractalType fractalType = EFastNoise_FractalType::RigidMulti;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	int32 noiseOctaves = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	float noiseFrequency = 0.02f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	float noiseCutoff = 0.5f;
 
-	// Second noise
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	EFastNoise_NoiseType noiseTypeTerrain = EFastNoise_NoiseType::Simplex;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	EFastNoise_FractalType fractalTypeTerrain = EFastNoise_FractalType::RigidMulti;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	int32 noiseOctavesTerrain = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	float noiseFrequencyTerrain = 0.02f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	float noiseCutoffTerrain = 0.5f;
 
-	// Cell size
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	float cubeCellSize = 64;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	float cubeSize = 256;
 
-	// Levels
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
 	float surfacelevel = 20000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
 	float coreLevel = 15000.0f;
 
 	// Getter
@@ -64,11 +84,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TArray<FVector> GetNormalData();
 
-protected:
-	// Create fast noise
+
+	// Testing
+	UPROPERTY();
 	UFastNoiseWrapper *fastNoiseWrapper = nullptr;;
+
+	UPROPERTY();
 	UFastNoiseWrapper *fastNoiseWrapperTerrain = nullptr;;
 
+	
+protected:
 	// Vertice Data
 	TArray<FVector> verticesData;
 	TArray<int32> trianglesData;

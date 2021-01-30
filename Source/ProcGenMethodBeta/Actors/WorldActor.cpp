@@ -14,15 +14,26 @@ AWorldActor::AWorldActor()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Create Defaults
-	component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent"));
+	//component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent"));
 
-	component_MC = CreateDefaultSubobject<UMeshMarchingCube>(TEXT("MeshMarchingCube"));
+	//component_MC = CreateDefaultSubobject<UMeshMarchingCube>(TEXT("MeshMarchingCube"));
 }
 
 // Called when the game starts or when spawned
 void AWorldActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Make sure object exist
+	if (component_RMC == nullptr)
+	{
+		component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));
+	}
+
+	if (component_MC == nullptr)
+	{
+		component_MC = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
+	}
 
 	// Copy defaults
 	SetMarchingCubeNoiseDefaults();

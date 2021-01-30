@@ -16,15 +16,26 @@
 UMeshMarchingCube::UMeshMarchingCube()
 {
     // Create wrapper for caves
-    fastNoiseWrapper = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapper"));
+    //fastNoiseWrapper = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapper"));
 
     // create wrapper for terrain
-    fastNoiseWrapperTerrain = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapperTerrain"));
+    //fastNoiseWrapperTerrain = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapperTerrain"));
 }
 
 // Initialization
 void UMeshMarchingCube::InitializeNoiseGridData()
 {
+    // Create Object
+    if (fastNoiseWrapper == nullptr)
+    {
+        fastNoiseWrapper = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapper"));
+    }
+
+    if (fastNoiseWrapperTerrain == nullptr)
+    {
+        fastNoiseWrapperTerrain = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapperTerrain"));
+    }
+
     // Create a fast noise and set values
     fastNoiseWrapper->SetupFastNoise();
 
@@ -66,7 +77,7 @@ void UMeshMarchingCube::Polygonization()
     // Create a cell here so faster reset
     MarchingCubeCell cell;
 
-    UE_LOG(LogTemp, Warning, TEXT("Marching Cube"));
+    UE_LOG(LogTemp, Warning, TEXT("Marching Cube - Cube Size %i"), cubeSize);
 
     // get all eight points and determine the configuration
     for (int z = 0; z < cubeSize; z++)
@@ -174,7 +185,7 @@ void UMeshMarchingCube::Polygonization()
         }
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("Text, %d %d %d"), verticesData.Num(), trianglesData.Num(), verticesNormalData.Num());
+    UE_LOG(LogTemp, Warning, TEXT("Generated Vertices %d  Triangles %d  Vertices %d"), verticesData.Num(), trianglesData.Num(), verticesNormalData.Num());
 }
 
 FVector UMeshMarchingCube::VertexInterp(float isolevel, FVector p1, FVector p2, double valp1, double valp2)
