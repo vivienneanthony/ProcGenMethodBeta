@@ -32,16 +32,16 @@ public:
 	EFastNoise_NoiseType in_noiseType = EFastNoise_NoiseType::Simplex;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	EFastNoise_FractalType in_fractalType = EFastNoise_FractalType::RigidMulti;
+	EFastNoise_FractalType in_fractalType = EFastNoise_FractalType::Billow;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	int32 in_noiseOctaves = 8;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	float in_noiseFrequency = 0.02f;
+	float in_noiseFrequency = 0.001f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	float in_noiseCutoff = 0.5f;
+	float in_noiseCutoff = 0.2f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	EFastNoise_NoiseType in_noiseTypeTerrain = EFastNoise_NoiseType::Simplex;
@@ -53,16 +53,16 @@ public:
 	int32 in_noiseOctavesTerrain = 8;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	float in_noiseFrequencyTerrain = 0.02f;
+	float in_noiseFrequencyTerrain = 0.001f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	float in_noiseCutoffTerrain = 0.5f;
+	float in_noiseCutoffTerrain = 0.2f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	float in_cubeCellSize = 64;
+	int32 in_cubeCellSize = 128;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	float in_cubeSize = 256;
+	int32 in_cubeSize = 256;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
 	float in_surfacelevel = 20000.0f;

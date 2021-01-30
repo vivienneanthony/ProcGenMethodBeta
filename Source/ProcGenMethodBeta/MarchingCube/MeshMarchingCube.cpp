@@ -77,14 +77,14 @@ void UMeshMarchingCube::Polygonization()
     // Create a cell here so faster reset
     MarchingCubeCell cell;
 
-    UE_LOG(LogTemp, Warning, TEXT("Marching Cube - Cube Size %i"), cubeSize);
+    UE_LOG(LogTemp, Warning, TEXT("Marching Cube - Cube Size %d"), cubeSize);
 
     // get all eight points and determine the configuration
-    for (int z = 0; z < cubeSize; z++)
+    for (int32 z = 0; z < cubeSize; z++)
     {
-        for (int y = 0; y < cubeSize; y++)
+        for (int32 y = 0; y < cubeSize; y++)
         {
-            for (int x = 0; x < cubeSize; x++)
+            for (int32 x = 0; x < cubeSize; x++)
             {
                 // reset data;
                 cell.ResetConfiguration();
@@ -169,7 +169,7 @@ void UMeshMarchingCube::Polygonization()
                     trianglesData.Add(index2);
                 }
 
-                for (int i = 0; verticesData.Num() != -1; i += 3)
+                /*for (int i = 0; verticesData.Num() != -1; i += 3)
                 {
                     // Create normal
                     FVector crossResult = FVector::CrossProduct(verticesData[i] - verticesData[i + 2], verticesData[i + 1] - verticesData[i + 2]);
@@ -180,7 +180,7 @@ void UMeshMarchingCube::Polygonization()
                     verticesNormalData.Add(crossResult);
                     verticesNormalData.Add(crossResult);
                     verticesNormalData.Add(crossResult);
-                }
+                }*/
             }
         }
     }
@@ -242,7 +242,7 @@ float UMeshMarchingCube::distanceSquare(FVector v1, FVector v2)
 void UMeshMarchingCube::CalculateCellData(MarchingCubeCell &cell, uint32 x, uint32 y, uint32 z)
 {
     // Declared once
-    float scale = cubeCellSize, noiseValue = 0.0f;
+    float scale = (float)cubeCellSize, noiseValue = 0.0f;
 
     // Use VPosition - Declare once to increase speed
     FVector vPosition = FVector(0.0f, 0.0f, 0.0f);

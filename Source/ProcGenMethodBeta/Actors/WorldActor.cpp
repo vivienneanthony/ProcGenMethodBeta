@@ -104,6 +104,13 @@ void AWorldActor::TestBoxProvider()
 // Test
 void AWorldActor::TestStaticProvider()
 {
+	// Fail safe if no mesh data is generated
+	if (component_MC->GetVerticesData().Num() <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Mesh Data Generated"));
+		return;
+	}
+
 	URuntimeMeshProviderStatic *StaticProvider = NewObject<URuntimeMeshProviderStatic>(this, TEXT("RuntimeMeshProvider-Static"));
 
 	if (StaticProvider)
@@ -113,20 +120,18 @@ void AWorldActor::TestStaticProvider()
 			// test initialize
 			component_RMC->Initialize(StaticProvider);
 
-			// Set Material
-			if (Material)
-			{
-				StaticProvider->SetupMaterialSlot(0, TEXT("TriMat"), Material);
-			}
-
+			
+			StaticProvider->SetupMaterialSlot(0, TEXT("TriMat"), Material);
+			
 			// This creates 3 vertex colors
 			TArray<FColor> Colors{FColor::Blue, FColor::Red, FColor::Green};
 
 			// Blank info
+			TArray<FVector> EmptyNormals;
 			TArray<FVector2D> EmptyTexCoords;
 			TArray<FRuntimeMeshTangent> EmptyTangents;
 
-			StaticProvider->CreateSectionFromComponents(0, 0, 0, component_MC->GetVerticesData(), component_MC->GetTrianglesData(), component_MC->GetNormalData(), EmptyTexCoords, Colors, EmptyTangents, ERuntimeMeshUpdateFrequency::Infrequent, true);
+			StaticProvider->CreateSectionFromComponents(0, 0, 0, component_MC->GetVerticesData(), component_MC->GetTrianglesData(), EmptyNormals, EmptyTexCoords, Colors, EmptyTangents, ERuntimeMeshUpdateFrequency::Infrequent, true);
 		}
 	}
 }
