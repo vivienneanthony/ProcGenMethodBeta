@@ -1,0 +1,97 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+
+// Runtime Mesh Componenent
+#include "RuntimeMeshComponent.h"
+
+// FastNoise Wrapper
+#include "FastNoiseWrapper.h"
+
+// Marching Cube
+#include "../MarchingCube/MeshMarchingCube.h"
+
+#include "WorldActor.generated.h"
+
+class URuntimeMeshComponent;
+
+UCLASS()
+class PROCGENMETHODBETA_API AWorldActor : public AActor
+{
+	GENERATED_BODY()
+
+public:
+	// Sets default values for this actor's properties
+	AWorldActor();
+
+	// Defaults
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	EFastNoise_NoiseType in_noiseType = EFastNoise_NoiseType::Simplex;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	EFastNoise_FractalType in_fractalType = EFastNoise_FractalType::RigidMulti;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	int32 in_noiseOctaves = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	float in_noiseFrequency = 0.02f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	float in_noiseCutoff = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	EFastNoise_NoiseType in_noiseTypeTerrain = EFastNoise_NoiseType::Simplex;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	EFastNoise_FractalType in_fractalTypeTerrain = EFastNoise_FractalType::RigidMulti;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	int32 in_noiseOctavesTerrain = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	float in_noiseFrequencyTerrain = 0.02f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	float in_noiseCutoffTerrain = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	float in_cubeCellSize = 64;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	float in_cubeSize = 256;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
+	float in_surfacelevel = 20000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
+	float in_coreLevel = 15000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
+	UMaterial *Material;
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+	// Set Marching Cube Noise Defaults
+	void SetMarchingCubeNoiseDefaults();
+
+	// Test Box
+	void TestBoxProvider();
+
+	void TestStaticProvider();
+
+	// Mesh Marching Cube
+	UMeshMarchingCube * component_MC = nullptr;
+
+	// Runtime work the above fails
+	URuntimeMeshComponent * component_RMC = nullptr;
+
+public:
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+};
