@@ -13,11 +13,12 @@ AWorldActor::AWorldActor()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+}
 
-	// Create Defaults
-	//component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent"));
-
-	//component_MC = CreateDefaultSubobject<UMeshMarchingCube>(TEXT("MeshMarchingCube"));
+// Construction
+void AWorldActor::OnConstruction(const FTransform & Transform)
+{
+	Super::OnConstruction(Transform);
 }
 
 // Called when the game starts or when spawned
@@ -35,15 +36,6 @@ void AWorldActor::BeginPlay()
 	{
 		component_MC = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
 	}
-
-	// Copy defaults
-	//SetMarchingCubeNoiseDefaults();
-
-	// Initialize Grid Data
-	//component_MC->InitializeNoiseGridData();
-
-	// CreateData
-	//component_MC->Polygonization();
 
 	// Test static
 	TestProviderSphereTerrain();
@@ -75,12 +67,12 @@ void AWorldActor::SetMarchingCubeNoiseDefaults()
 	// other defaults
 	component_MC->cubeCellSize = in_cubeCellSize;
 	component_MC->cubeSize = in_cubeSize;
-	component_MC->surfacelevel = in_surfacelevel;
+	component_MC->surfaceLevel = in_surfaceLevel;
 	component_MC->coreLevel = in_coreLevel;
 }
 
 // Test
-void AWorldActor::TestBoxProvider()
+void AWorldActor::TestSphereProvider()
 {
 	URuntimeMeshProviderSphere *SphereProvider = NewObject<URuntimeMeshProviderSphere>(this, TEXT("RuntimeMeshProvider-Sphere"));
 
@@ -104,13 +96,6 @@ void AWorldActor::TestBoxProvider()
 
 void AWorldActor::TestProviderSphereTerrain()
 {
-	// Fail safe if no mesh data is generated
-	if (component_MC->GetVerticesData().Num() <= 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No Mesh Data Generated"));
-		return;
-	}
-
 	// Use Runtime Mesh Terraini to produce mesh
 	URuntimeProviderSphereTerrain *SphereTerrainProvider = NewObject<URuntimeProviderSphereTerrain>(this, TEXT("RuntimeProviderSphereTerrain "));
 
@@ -119,8 +104,33 @@ void AWorldActor::TestProviderSphereTerrain()
 	{
 		if (component_RMC)
 		{
+			// Create a parameter
+			FMeshMarchingCubeParameters outParameters;
+
+			// copy defaults
+			outParameters.noiseType = in_noiseType;
+			outParameters.fractalType = in_fractalType;
+			outParameters.noiseOctaves = in_noiseOctaves;
+			outParameters.noiseFrequency = in_noiseFrequency;
+			outParameters.noiseCutoff = in_noiseCutoff;
+			outParameters.noiseTypeTerrain = in_noiseTypeTerrain;
+			outParameters.fractalTypeTerrain = in_fractalTypeTerrain;
+			outParameters.noiseOctavesTerrain = in_noiseOctavesTerrain;
+			outParameters.noiseFrequencyTerrain = in_noiseFrequencyTerrain;
+			outParameters.noiseCutoffTerrain = in_noiseCutoffTerrain;
+			outParameters.cubeCellSize = in_cubeCellSize;
+			outParameters.cubeSize = in_cubeSize;
+			outParameters.surfaceLevel = in_surfaceLevel;
+			outParameters.coreLevel = in_coreLevel;
+
+			// Set Marching Cube Parameters
+			SphereTerrainProvider->SetMarchingCubeParameters(outParameters);
+			
+			// Set Material
+			SphereTerrainProvider->SetSphereMaterial(Material);
+
 			// test initialize
-			component_RMC->Initialize(SphereTerrainProvider);
+			component_RMC->Initialize(SphereTerrainProvider);				
 		}
 	}
 }

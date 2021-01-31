@@ -11,6 +11,8 @@
 // FastNoise Wrapper
 #include "FastNoiseWrapper.h"
 
+#include "../Structures/MeshMarchingCubeParameters.h"
+
 // Marching Cube
 #include "../MarchingCube/MeshMarchingCube.h"
 
@@ -26,6 +28,9 @@ class PROCGENMETHODBETA_API AWorldActor : public AActor
 public:
 	// Sets default values for this actor's properties
 	AWorldActor();
+
+	// Construction
+	void OnConstruction(const FTransform &Transform) override;
 
 	// Defaults
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
@@ -65,7 +70,7 @@ public:
 	int32 in_cubeSize = 256;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
-	float in_surfacelevel = 20000.0f;
+	float in_surfaceLevel = 20000.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
 	float in_coreLevel = 15000.0f;
@@ -81,18 +86,20 @@ protected:
 	void SetMarchingCubeNoiseDefaults();
 
 	// Test Box
-	void TestBoxProvider();
+	void TestSphereProvider();
 
+	// Static
 	void TestStaticProvider();
 
+	// Sphere Terrain
 	void TestProviderSphereTerrain();
 
 	// Mesh Marching Cube
-	UMeshMarchingCube * component_MC = nullptr;
+	UMeshMarchingCube *component_MC = nullptr;
 
 	// Runtime work the above fails
-	URuntimeMeshComponent * component_RMC = nullptr;
-
+	URuntimeMeshComponent *component_RMC = nullptr;
+	
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

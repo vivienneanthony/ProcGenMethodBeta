@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 
+#include "UObject/Object.h"
+#include "UObject/ObjectMacros.h"
+
 #include "../Util/Vect3.h"
 
 #include "FastNoiseWrapper.h"
@@ -11,8 +14,7 @@
 #include "MarchingCubeUtil.h"
 #include "MarchingCubeCell.h"
 
-#include "UObject/Object.h"
-#include "UObject/ObjectMacros.h"
+#include "../Structures/MeshMarchingCubeParameters.h"
 
 #include "MeshMarchingCube.generated.h"
 
@@ -29,8 +31,31 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void InitializeNoiseGridData();
 
+	// Polygonization
 	UFUNCTION(BlueprintCallable)
 	void Polygonization();
+
+	// Set Parameters
+	void SetParameters(FMeshMarchingCubeParameters inParameters);
+
+	// Getters
+	UFUNCTION(BlueprintCallable)
+	TArray<FVector> GetVerticesData();
+
+	UFUNCTION(BlueprintCallable)
+	TArray<int32> GetTrianglesData();
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FVector> GetNormalData();
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FVector> GetTangentXData();
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FVector> GetTangentZData();
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FVector2D> GetColorData();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	EFastNoise_NoiseType noiseType = EFastNoise_NoiseType::Simplex;
@@ -69,35 +94,30 @@ public:
 	int32 cubeSize = 256;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
-	float surfacelevel = 20000.0f;
+	float surfaceLevel = 20000.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
 	float coreLevel = 15000.0f;
 
-	// Getter
-	UFUNCTION(BlueprintCallable)
-	TArray<FVector> GetVerticesData();
-
-	UFUNCTION(BlueprintCallable)
-	TArray<int32> GetTrianglesData();
-
-	UFUNCTION(BlueprintCallable)
-	TArray<FVector> GetNormalData();
-
-
 	// Testing
 	UPROPERTY();
-	UFastNoiseWrapper *fastNoiseWrapper = nullptr;;
+	UFastNoiseWrapper *fastNoiseWrapper = nullptr;
+	;
 
 	UPROPERTY();
-	UFastNoiseWrapper *fastNoiseWrapperTerrain = nullptr;;
+	UFastNoiseWrapper *fastNoiseWrapperTerrain = nullptr;
+	;
 
-	
 protected:
 	// Vertice Data
 	TArray<FVector> verticesData;
 	TArray<int32> trianglesData;
 	TArray<FVector> verticesNormalData;
+
+	// required for runtimemesh
+	TArray<FVector> tangentXData;
+	TArray<FVector> tangentZData;
+	TArray<FVector2D> colorData;
 
 	// Do Intrepreation
 	FVector VertexInterp(float isolevel, FVector p1, FVector p2, double valp1, double valp2);

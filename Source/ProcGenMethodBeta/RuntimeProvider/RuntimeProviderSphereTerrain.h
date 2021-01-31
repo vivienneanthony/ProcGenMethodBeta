@@ -6,12 +6,21 @@
 
 // RuntimeMeshComponent Headers
 #include "RuntimeMeshProvider.h"
+#include "RuntimeMeshModifier.h"
+
+#include "Modifiers/RuntimeMeshModifierNormals.h"
 
 // Add Marching cube
 #include "../MarchingCube/MeshMarchingCube.h"
+#include "../Structures/MeshMarchingCubeParameters.h"
+
+#include "../Octree/OctreeNode.h"
 
 // Generated file
 #include "RuntimeProviderSphereTerrain.generated.h"
+
+
+class URuntimeMeshModifier;
 
 // Class
 UCLASS()
@@ -33,6 +42,12 @@ public:
 	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
 	void SetSphereRadius(float InSphereRadius);
 
+	// Set Parameters
+	virtual void SetMarchingCubeParameters(FMeshMarchingCubeParameters inParameters);
+
+	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
+	void SetSphereMaterial(UMaterialInterface *InSphereMaterial);
+
 	UPROPERTY()
 	UMeshMarchingCube *ptrMarchingCube = nullptr;
 
@@ -49,6 +64,20 @@ protected:
 	// Get section Mesh
 	virtual bool GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData) override;
 
+	// Marching Cube Parameters
+	FMeshMarchingCubeParameters configMeshMarchingCubeParameters;
+
 private:
 	mutable FCriticalSection PropertySyncRoot;
+	mutable FRWLock ModifierRWLock;
+
+	// Array
+	TArray<URuntimeMeshModifier*> CurrentMeshModifiers;
+
+	// Root Octree
+	OctreeNode rootOctreeNode;
+
+	// Material
+	UMaterialInterface *AutoTerrainMaterial;
+
 };

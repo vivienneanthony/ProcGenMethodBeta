@@ -47,7 +47,7 @@ public:
     int32 cubeSize;
 
     UPROPERTY(EditAnywhere, Category = "Levels")
-    float surfacelevel;
+    float surfaceLevel;
 
     UPROPERTY(EditAnywhere, Category = "Levels")
     float coreLevel;

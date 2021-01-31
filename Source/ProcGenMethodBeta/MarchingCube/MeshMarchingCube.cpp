@@ -15,22 +15,38 @@
 // Constructor
 UMeshMarchingCube::UMeshMarchingCube()
 {
-    // Create wrapper for caves
-    //fastNoiseWrapper = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapper"));
-
-    // create wrapper for terrain
-    //fastNoiseWrapperTerrain = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapperTerrain"));
+    // Do nothing
 }
 
-// Initialization
+void UMeshMarchingCube::SetParameters(FMeshMarchingCubeParameters inParameters)
+{
+    // copy defaults
+    noiseType = inParameters.noiseType;
+    fractalType = inParameters.fractalType;
+    noiseOctaves = inParameters.noiseOctaves;
+    noiseFrequency = inParameters.noiseFrequency;
+    noiseCutoff = inParameters.noiseCutoff;
+    noiseTypeTerrain = inParameters.noiseTypeTerrain;
+    fractalTypeTerrain = inParameters.fractalTypeTerrain;
+    noiseOctavesTerrain = inParameters.noiseOctavesTerrain;
+    noiseFrequencyTerrain = inParameters.noiseFrequencyTerrain;
+    noiseCutoffTerrain = inParameters.noiseCutoffTerrain;
+    cubeCellSize = inParameters.cubeCellSize;
+    cubeSize = inParameters.cubeSize;
+    surfaceLevel = inParameters.surfaceLevel;
+    coreLevel = inParameters.coreLevel;
+}
+
+// Initializatio
 void UMeshMarchingCube::InitializeNoiseGridData()
 {
-    // Create Object
+    // Create cavermfast noise wrapper
     if (fastNoiseWrapper == nullptr)
     {
         fastNoiseWrapper = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapper"));
     }
 
+    // Create terrain fast noise wrapper
     if (fastNoiseWrapperTerrain == nullptr)
     {
         fastNoiseWrapperTerrain = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapperTerrain"));
@@ -140,26 +156,27 @@ void UMeshMarchingCube::Polygonization()
                     vertlist[11] =
                         VertexInterp(isolevel, cell.v[3], cell.v[7], cell.val[3], cell.val[7]);
 
+                // Produce once
+                FVector trianglepoint0, trianglepoint1, trianglepoint2;
+
                 /* Create the triangle */
                 for (int i = 0; triTable[ConfigurationValue][i] != -1; i += 3)
                 {
-                    FVector trianglepoint0 = vertlist[triTable[ConfigurationValue][i]];
-                    FVector trianglepoint1 = vertlist[triTable[ConfigurationValue][i + 1]];
-                    FVector trianglepoint2 = vertlist[triTable[ConfigurationValue][i + 2]];
+                    trianglepoint0 = vertlist[triTable[ConfigurationValue][i]];
+                    trianglepoint1 = vertlist[triTable[ConfigurationValue][i + 1]];
+                    trianglepoint2 = vertlist[triTable[ConfigurationValue][i + 2]];
 
                     // Append Data
                     verticesData.Add(trianglepoint0);
-                    //index0 = verticesData.Num() - 1;
                     index0 = count;
                     count++;
 
                     verticesData.Add(trianglepoint1);
-                    //index1 = verticesData.Num() - 1;
+                    ;
                     index1 = count;
                     count++;
 
                     verticesData.Add(trianglepoint2);
-                    //index2 = verticesData.Num() - 1;
                     index2 = count;
                     count++;
 
@@ -168,19 +185,6 @@ void UMeshMarchingCube::Polygonization()
                     trianglesData.Add(index1);
                     trianglesData.Add(index2);
                 }
-
-                /*for (int i = 0; verticesData.Num() != -1; i += 3)
-                {
-                    // Create normal
-                    FVector crossResult = FVector::CrossProduct(verticesData[i] - verticesData[i + 2], verticesData[i + 1] - verticesData[i + 2]);
-
-                    // Normalize
-                    crossResult.Normalize();
-
-                    verticesNormalData.Add(crossResult);
-                    verticesNormalData.Add(crossResult);
-                    verticesNormalData.Add(crossResult);
-                }*/
             }
         }
     }
@@ -219,6 +223,24 @@ TArray<FVector> UMeshMarchingCube::GetVerticesData()
 TArray<int32> UMeshMarchingCube::GetTrianglesData()
 {
     return trianglesData;
+}
+
+// Getter
+TArray<FVector> UMeshMarchingCube::GetTangentXData()
+{
+    return tangentXData;
+}
+
+// Getter
+TArray<FVector> UMeshMarchingCube::GetTangentZData()
+{
+    return tangentZData;
+}
+
+// Getter
+TArray<FVector2D> UMeshMarchingCube::GetColorData()
+{
+    return colorData;
 }
 
 // Getter
