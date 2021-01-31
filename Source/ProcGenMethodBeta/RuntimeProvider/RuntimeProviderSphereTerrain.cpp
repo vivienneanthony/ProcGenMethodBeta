@@ -82,9 +82,19 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
     TArray<FVector> positions = ptrMarchingCube->GetVerticesData();
     TArray<int32> triangles = ptrMarchingCube->GetTrianglesData();
 
+    auto AddVertex = [&](const FVector &InPosition, const FVector &InTangentX, const FVector &InTangentZ, const FVector2D &InTexCoord) {
+        MeshData.Positions.Add(InPosition);
+        MeshData.Tangents.Add(InTangentZ, InTangentX);
+        MeshData.Colors.Add(FColor::White);
+        MeshData.TexCoords.Add(InTexCoord);
+    };
+
+    FVector Tangent;
+    FVector2D TextCoord;
+
     for (uint32 i = 0; i < positions.Num(); i++)
     {
-        MeshData.Positions.Add(positions[i]);
+        AddVertex(positions[i], Tangent, Tangent, TextCoord);
     }
 
     for (uint32 i = 0; i < triangles.Num(); i += 3)
@@ -92,16 +102,31 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
         MeshData.Triangles.AddTriangle(triangles[i], triangles[i + 1], triangles[i + 2]);
     }
 
+    bool testMesh = MeshData.HasValidMeshData();
+
+    FString valid = "Valid";
+    FString invalid = "Invalid";
+
+    if (testMesh == true)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Mesh Data %s"), *valid);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Mesh Data %s"), *invalid);
+        return false;
+    }
+
     // Write Log
     UE_LOG(LogTemp, Warning, TEXT("Provider Vertices %d  Triangles %d"), MeshData.Positions.Num(), MeshData.Triangles.Num());
 
+    // Modifiers
     FReadScopeLock Lock(ModifierRWLock);
+    for (URuntimeMeshModifier *Modifier : CurrentMeshModifiers)
+    {
 
-    for (URuntimeMeshModifier* Modifier : CurrentMeshModifiers)
-	{
-		
-			Modifier->ApplyToMesh(MeshData);
-	}
+      Modifier->ApplyToMesh(MeshData);
+    }
 
     return true;
 }
