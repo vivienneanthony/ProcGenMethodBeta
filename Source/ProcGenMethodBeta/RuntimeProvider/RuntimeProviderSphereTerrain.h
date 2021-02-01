@@ -19,7 +19,6 @@
 // Generated file
 #include "RuntimeProviderSphereTerrain.generated.h"
 
-
 class URuntimeMeshModifier;
 
 // Class
@@ -72,12 +71,14 @@ private:
 	mutable FRWLock ModifierRWLock;
 
 	// Array
-	TArray<URuntimeMeshModifier*> CurrentMeshModifiers;
+	TArray<URuntimeMeshModifier *> CurrentMeshModifiers;
 
 	// Root Octree
 	OctreeNode rootOctreeNode;
 
+	// Octree Node Sections
+	TArray<OctreeNode *> OctreeNodeSections;
+
 	// Material
 	UMaterialInterface *AutoTerrainMaterial;
-
 };

@@ -95,25 +95,25 @@ public:
     /// Subtract operator / Vector
     Vect3 operator-(const Vect3 &rhs)
     {
-        return Vect3(x - rhs.z, y - rhs.y, z - rhs.z);
+        return Vect3(x - rhs.x, y - rhs.y, z - rhs.z);
     };
 
     /// Additonial operator / Vector
     Vect3 operator+(const Vect3 &rhs)
     {
-        return Vect3(x + rhs.z, y + rhs.y, z + rhs.z);
+        return Vect3(x + rhs.x, y + rhs.y, z + rhs.z);
     };
 
     /// Multiplication operator / Vector
     Vect3 operator*(const Vect3 &rhs)
     {
-        return Vect3(x * rhs.z, y * rhs.y, z * rhs.z);
+        return Vect3(x * rhs.x, y * rhs.y, z * rhs.z);
     };
 
     /// Divide operator / Vector
     Vect3 operator/(const Vect3 &rhs)
     {
-        return Vect3(x / rhs.z, y / rhs.y, z / rhs.z);
+        return Vect3(x / rhs.x, y / rhs.y, z / rhs.z);
     };
 
     // Divide Operator

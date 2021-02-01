@@ -1,6 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "RuntimeProviderSphereTerrain.h"
+#include <algorithm>
+
+// Maximum Depth Octree
+
+// Using LODDOF FOR DETAIL LEVEL PER NODE
+
+#define MAXOCTREENODEDEPTH 2
 
 URuntimeMeshProviderSphere::URuntimeMeshProviderSphere()
     : MaxLOD(0), SphereRadius(20000.0f)
@@ -9,10 +16,32 @@ URuntimeMeshProviderSphere::URuntimeMeshProviderSphere()
 
     // Set Octree to half the radius or full depending on how to set the bounds
     // Maxlod of octree can be set to MaxLOD
+    MaxLOD = 10;
 }
 
 void URuntimeProviderSphereTerrain::Initialize()
 {
+
+    // Core
+    ptrMarchingCube = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
+
+    // Write Long if marching cube can't be created
+    if (!ptrMarchingCube)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Initialize - Generate Marching Cube"));
+
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Initialize - Set Parameters"));
+    ptrMarchingCube->SetParameters(configMeshMarchingCubeParameters);
+
+    // Write Log
+    UE_LOG(LogTemp, Warning, TEXT("Initialize - Initialize Noise Grid Data"));
+
+    // Initialize
+    ptrMarchingCube->InitializeNoiseGridData();
+
     // Not adding a new object
     FWriteScopeLock Lock(ModifierRWLock);
     CurrentMeshModifiers.Add(NewObject<URuntimeMeshModifierNormals>(this, "RuntimeMeshModifierNormals"));
@@ -36,8 +65,25 @@ void URuntimeProviderSphereTerrain::Initialize()
     Properties.MaterialSlot = 0;
     Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
 
-    // CreateDefault Section
-    CreateSection(0, 0, Properties);
+    // Generate Octree
+    rootOctreeNode.BoundRegion.Min = Vect3(-10000.0f, -10000.0f, -10000.0f);
+    rootOctreeNode.BoundRegion.Max = Vect3(10000.0f, 10000.0f, 10000.0f);
+
+    // Generate Tree Base On Max Lod
+    rootOctreeNode.BuildTree(MAXOCTREENODEDEPTH);
+
+    // Return list of nodes
+    rootOctreeNode.GetAllNodesAtDepth(MAXOCTREENODEDEPTH, OctreeNodeSections);
+
+    // Log
+    UE_LOG(LogTemp, Warning, TEXT("Sections %d"), OctreeNodeSections.Num());
+
+    // create all sections  // This should get all sections
+    for (unsigned int section = 0; section < OctreeNodeSections.Num(); section++)
+    {
+        // CreateDefault Section
+        CreateSection(0, section, Properties);
+    }
 
     // Mark collision dirty not used
     MarkCollisionDirty();
@@ -47,10 +93,7 @@ void URuntimeProviderSphereTerrain::Initialize()
 bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData)
 {
     // We should only ever be queried for section 0 and lod 0
-    check(SectionId == 0 && LODIndex == 0);
-
-    // Core
-    ptrMarchingCube = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
+    //check(SectionId == 0 && LODIndex == 0);
 
     // Write Long if marching cube can't be created
     if (!ptrMarchingCube)
@@ -60,27 +103,24 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
         return false;
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Set Parameters"));
-    ptrMarchingCube->SetParameters(configMeshMarchingCubeParameters);
-
-    // Write Log
-    UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Initialize Noise Grid Data"));
-
-    // Initialize
-    ptrMarchingCube->InitializeNoiseGridData();
-
     // Write Log
     UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Polygonization"));
 
+    // Copy region
+    FVector polygonizationBoundRegionMin = FVector(OctreeNodeSections[SectionId]->BoundRegion.Min.x, OctreeNodeSections[SectionId]->BoundRegion.Min.y, OctreeNodeSections[SectionId]->BoundRegion.Min.z);
+    FVector polygonizationBoundRegionMax = FVector(OctreeNodeSections[SectionId]->BoundRegion.Max.x, OctreeNodeSections[SectionId]->BoundRegion.Max.y, OctreeNodeSections[SectionId]->BoundRegion.Max.z);
+
+    // Get data from polygonization
+    TArray<FVector> positions;
+    TArray<int32> triangles;
+
     // create polygons
-    ptrMarchingCube->Polygonization();
+    UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Generating for bound  Min %s  Max %s"), *polygonizationBoundRegionMin.ToString(), *polygonizationBoundRegionMax.ToString());
+
+    ptrMarchingCube->PolygonizationV2(polygonizationBoundRegionMin, polygonizationBoundRegionMax, positions, triangles);
 
     // Write Log
     UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Copy to MeshData (Could be a memory move)"));
-
-    // Get data from polygonization
-    TArray<FVector> positions = ptrMarchingCube->GetVerticesData();
-    TArray<int32> triangles = ptrMarchingCube->GetTrianglesData();
 
     auto AddVertex = [&](const FVector &InPosition, const FVector &InTangentX, const FVector &InTangentZ, const FVector2D &InTexCoord) {
         MeshData.Positions.Add(InPosition);
@@ -102,6 +142,9 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
         MeshData.Triangles.AddTriangle(triangles[i], triangles[i + 1], triangles[i + 2]);
     }
 
+    // Write Log
+    UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Copied  Vertices %d  Triangles %d"), positions.Num(), triangles.Num());
+
     bool testMesh = MeshData.HasValidMeshData();
 
     FString valid = "Valid";
@@ -110,22 +153,21 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
     if (testMesh == true)
     {
         UE_LOG(LogTemp, Warning, TEXT("Mesh Data %s"), *valid);
+
+       // FReadScopeLock Lock(ModifierRWLock);
+
+       // for (int i = 0; i < CurrentMeshModifiers.Num(); i++)
+        //{
+        //    if (CurrentMeshModifiers[i])
+         //   {
+         //       CurrentMeshModifiers[i]->ApplyToMesh(MeshData);
+       //     }
+        //}//
     }
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("Mesh Data %s"), *invalid);
         return false;
-    }
-
-    // Write Log
-    UE_LOG(LogTemp, Warning, TEXT("Provider Vertices %d  Triangles %d"), MeshData.Positions.Num(), MeshData.Triangles.Num());
-
-    // Modifiers
-    FReadScopeLock Lock(ModifierRWLock);
-    for (URuntimeMeshModifier *Modifier : CurrentMeshModifiers)
-    {
-
-      Modifier->ApplyToMesh(MeshData);
     }
 
     return true;

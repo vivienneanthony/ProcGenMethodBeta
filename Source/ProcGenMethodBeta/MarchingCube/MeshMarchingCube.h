@@ -35,6 +35,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Polygonization();
 
+	// Polygonization
+	UFUNCTION(BlueprintCallable)
+	void PolygonizationV2(FVector inBoundaryRegionMin, FVector inBoundaryRegionMax, TArray<FVector> & verticesPolygonizationData, TArray<int32> & trianglesPolygonizationData);
+
 	// Set Parameters
 	void SetParameters(FMeshMarchingCubeParameters inParameters);
 
@@ -102,11 +106,15 @@ public:
 	// Testing
 	UPROPERTY();
 	UFastNoiseWrapper *fastNoiseWrapper = nullptr;
-	;
+
 
 	UPROPERTY();
 	UFastNoiseWrapper *fastNoiseWrapperTerrain = nullptr;
-	;
+
+
+	// Bound Region
+	FVector BoundRegionMin;
+	FVector BoundRegionMax;
 
 protected:
 	// Vertice Data
@@ -127,4 +135,7 @@ protected:
 
 	// Calculate Cell Data
 	void CalculateCellData(MarchingCubeCell &cell, uint32 x, uint32 y, uint32 z);
+
+	// Marchiing
+	void CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, uint32 y, uint32 z, FVector inBoundaryRegionMin, FVector inBoundaryRegionMax);
 };

@@ -4,19 +4,16 @@
 #include "../Util/Vect3.h"
 #include "../Util/States.hpp"
 
-
 // Vivienne Anthony
 // 2021
 
 #include <iostream>
 
-
-
 OctreeNode::OctreeNode()
 {
     // Set default boungs to 1
-    BoundRegion.Min = Vect3(0.0f,0.0f,0.0f);
-    BoundRegion.Max = Vect3(1.0f,1.0f,1.0f);
+    BoundRegion.Min = Vect3(0.0f, 0.0f, 0.0f);
+    BoundRegion.Max = Vect3(1.0f, 1.0f, 1.0f);
 
     // set initial depth to zero
     depth = 0;
@@ -27,7 +24,7 @@ OctreeNode::OctreeNode()
 OctreeNode::OctreeNode(Vect3 inMax)
 {
     // copy bounds
-    BoundRegion.Min = Vect3(0.0f,0.0f,0.0f);
+    BoundRegion.Min = Vect3(0.0f, 0.0f, 0.0f);
     BoundRegion.Max = inMax;
 
     // set initial depth to zero
@@ -39,24 +36,23 @@ OctreeNode::OctreeNode(Vect3 inMax)
 OctreeNode::~OctreeNode()
 {
     // loop through each
-    for(unsigned i=0; i<OCTANTS; i++)
+    for (unsigned i = 0; i < OCTANTS; i++)
     {
-        if(Node[i])
+        if (Node[i])
         {
             //  delete Node[i];
         }
     }
-
 }
 
 void OctreeNode::BuildTree(unsigned int indepth)
 {
     // this says a node is not created yet
-    if(treeReady == false)
+    if (treeReady == false)
     {
 
         // if reached maxmimum depth close
-        if(depth>=indepth||depth>LODDEPTH)
+        if (depth > indepth || depth > LODDEPTH)
         {
             // set the maximum so set this node to ready
             hasChildren = false;
@@ -66,38 +62,38 @@ void OctreeNode::BuildTree(unsigned int indepth)
         }
 
         // loop through each
-        for(unsigned i=0; i<OCTANTS; i++)
+        for (unsigned i = 0; i < OCTANTS; i++)
         {
             // Octant quadrant
             Node[i] = new OctreeNode();
 
             // Populate node data
-            Node[i]-> Parent = this;
-            Node[i]-> depth = (depth+1);
+            Node[i]->Parent = this;
+            Node[i]->depth = (depth + 1);
 
             // Calculate Bounds
-            Node[i]-> CalculateBounds((Octant)(1 << i));
+            Node[i]->CalculateBounds((Octant)(1 << i));
 
             // Activate this octant
             States::activateIndex(&activeOctants, i);
 
             // Build Treee
-            Node[i] -> BuildTree(indepth);
+            Node[i]->BuildTree(indepth);
         }
+
+        hasChildren = true;
     }
 
-    hasChildren = true;
     treeReady = true;
 
     return;
 }
 
-
 // Calculate Bounds
 void OctreeNode::CalculateBounds(Octant octant)
 {
     // this calculate the center of this parent region
-    Vect3 center = Parent -> BoundRegion.CalculateCenter();
+    Vect3 center = Parent->BoundRegion.CalculateCenter();
 
     if ((Octant)octant == Octant::Quadrant0)
     {
@@ -131,14 +127,13 @@ void OctreeNode::CalculateBounds(Octant octant)
     {
         BoundRegion.SetRegion(Vect3(center.x, Parent->BoundRegion.Min.y, Parent->BoundRegion.Min.z), Vect3(Parent->BoundRegion.Max.x, center.y, center.z));
     }
-
 }
 
 // Calculate Bounds
 void OctreeNode::PreCalculateBounds(Octant octant, Vect3 &outMin, Vect3 &outMax)
 {
     // this calculate the center of this this region
-    Vect3 center = this -> BoundRegion.CalculateCenter();
+    Vect3 center = this->BoundRegion.CalculateCenter();
 
     if ((Octant)octant == Octant::Quadrant0)
     {
@@ -168,29 +163,25 @@ void OctreeNode::PreCalculateBounds(Octant octant, Vect3 &outMin, Vect3 &outMax)
     else if ((Octant)octant == Octant::Quadrant5)
     {
         outMin = Vect3(this->BoundRegion.Min.x, center.y, this->BoundRegion.Min.z);
-        outMax =  Vect3(center.x, this->BoundRegion.Max.y, center.z);
+        outMax = Vect3(center.x, this->BoundRegion.Max.y, center.z);
     }
     else if ((Octant)octant == Octant::Quadrant6)
     {
         outMin = this->BoundRegion.Min;
         outMax = center;
-
     }
     else if ((Octant)octant == Octant::Quadrant7)
     {
         outMin = Vect3(center.x, this->BoundRegion.Min.y, this->BoundRegion.Min.z);
-        outMax =  Vect3(this->BoundRegion.Max.x, center.y, center.z);
+        outMax = Vect3(this->BoundRegion.Max.x, center.y, center.z);
     }
-
 }
-
 
 // Copy data from input
 void OctreeNode::InitPointData(std::vector<PointV3> inData)
 {
     // check if point list is created
     //PointList->clear();
-
 
     // copy data to root node
     while (inData.size())
@@ -204,10 +195,10 @@ void OctreeNode::InitPointData(std::vector<PointV3> inData)
 void OctreeNode::BuildTreeFromData()
 {
     // if tree not ready calculate bounds
-    if(treeReady==false)
+    if (treeReady == false)
     {
         // loop through each
-        for(unsigned i=0; i<OCTANTS; i++)
+        for (unsigned i = 0; i < OCTANTS; i++)
         {
 
             Node[i] = nullptr;
@@ -216,10 +207,10 @@ void OctreeNode::BuildTreeFromData()
         // if reached maxmimum depth close
         //if(depth>LODDEPTH)
 
-        if(PointListQueue.size()<5||depth==LODDEPTH)
+        if (PointListQueue.size() < 5 || depth == LODDEPTH)
         {
             // loop through each
-            while(PointListQueue.size())
+            while (PointListQueue.size())
             {
                 PointV3 inVect = PointListQueue.front();
                 PointList.push_back(inVect);
@@ -238,7 +229,7 @@ void OctreeNode::BuildTreeFromData()
         Region TempRegions[8];
 
         // loop through each
-        for(unsigned i=0; i<OCTANTS; i++)
+        for (unsigned i = 0; i < OCTANTS; i++)
         {
             Vect3 boundMin;
             Vect3 boundMax;
@@ -250,9 +241,7 @@ void OctreeNode::BuildTreeFromData()
             TempRegions[i].Max = boundMax;
         }
 
-
         bool inRegion = false;
-
 
         PointV3 inVect = PointListQueue.front();
 
@@ -260,30 +249,29 @@ void OctreeNode::BuildTreeFromData()
         // idea so each depth progressively doubles the detail
 
         // loop through each
-        while(PointListQueue.size())
+        while (PointListQueue.size())
         {
 
-            for(unsigned i=0; i<OCTANTS; i++)
+            for (unsigned i = 0; i < OCTANTS; i++)
             {
                 inRegion = TempRegions[i].InRegion(inVect.v);
 
-                if(inRegion)
+                if (inRegion)
                 {
-                    if(Node[i])
+                    if (Node[i])
                     {
                         Node[i]->AddQueue(inVect);
-
                     }
                     else
                     {
                         Node[i] = new OctreeNode();
 
                         // Populate node data
-                        Node[i]-> Parent = this;
-                        Node[i]-> depth = (depth+1);
+                        Node[i]->Parent = this;
+                        Node[i]->depth = (depth + 1);
 
                         // Calculate Bounds
-                        Node[i]-> CalculateBounds((Octant)(1 << i));
+                        Node[i]->CalculateBounds((Octant)(1 << i));
 
                         // Activate this octant
                         States::activateIndex(&activeOctants, i);
@@ -303,10 +291,10 @@ void OctreeNode::BuildTreeFromData()
         }
 
         // Build Tree
-        for(unsigned int i=0; i<OCTANTS; i++)
+        for (unsigned int i = 0; i < OCTANTS; i++)
         {
             // Calculate Bounds
-            if(Node[i])
+            if (Node[i])
             {
                 Node[i]->BuildTreeFromData();
             }
@@ -314,11 +302,30 @@ void OctreeNode::BuildTreeFromData()
     }
 }
 
-
 void OctreeNode::AddQueue(PointV3 inPoint)
 {
-
 
     PointListQueue.push(inPoint);
 }
 
+void OctreeNode::GetAllNodesAtDepth(unsigned int indepth, TArray<OctreeNode *> &index)
+{
+    // if reached maxmimum depth close
+    if (depth == indepth)
+    {
+        index.Add(this);
+        
+        return;
+    }
+
+    // loop through each
+    for (unsigned i = 0; i < OCTANTS; i++)
+    {
+        if (Node[i])
+        {
+            Node[i]->GetAllNodesAtDepth(indepth, index);
+        }
+    }
+
+    return;
+}
