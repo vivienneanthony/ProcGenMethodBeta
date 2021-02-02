@@ -76,6 +76,16 @@ void UMeshMarchingCube::InitializeNoiseGridData()
     verticesNormalData.Empty();
 }
 
+//
+//
+//
+//
+//  THIS IS THE PART NOT USED - Original algorithm
+//
+//
+//
+//
+
 // This creates the vertex from data
 void UMeshMarchingCube::Polygonization()
 {
@@ -191,74 +201,6 @@ void UMeshMarchingCube::Polygonization()
     UE_LOG(LogTemp, Warning, TEXT("Generated Vertices %d  Triangles %d  Vertices %d"), verticesData.Num(), trianglesData.Num(), verticesNormalData.Num());
 }
 
-FVector UMeshMarchingCube::VertexInterp(float isolevel, FVector p1, FVector p2, double valp1, double valp2)
-{
-    // Needed Valuables
-
-    double mu;
-    FVector p;
-
-    if (UKismetMathLibrary::Abs(isolevel - valp1) < 0.00001)
-        return (p1);
-    if (UKismetMathLibrary::Abs(isolevel - valp2) < 0.00001)
-        return (p2);
-    if (UKismetMathLibrary::Abs(valp1 - valp2) < 0.00001)
-        return (p1);
-    mu = (isolevel - valp1) / (valp2 - valp1);
-    p.X = p1.X + mu * (p2.X - p1.X);
-    p.Y = p1.Y + mu * (p2.Y - p1.Y);
-    p.Z = p1.Z + mu * (p2.Z - p1.Z);
-
-    return (p);
-}
-
-// Getter
-TArray<FVector> UMeshMarchingCube::GetVerticesData()
-{
-    return verticesData;
-}
-
-// Getter
-TArray<int32> UMeshMarchingCube::GetTrianglesData()
-{
-    return trianglesData;
-}
-
-// Getter
-TArray<FVector> UMeshMarchingCube::GetTangentXData()
-{
-    return tangentXData;
-}
-
-// Getter
-TArray<FVector> UMeshMarchingCube::GetTangentZData()
-{
-    return tangentZData;
-}
-
-// Getter
-TArray<FVector2D> UMeshMarchingCube::GetColorData()
-{
-    return colorData;
-}
-
-// Getter
-TArray<FVector> UMeshMarchingCube::GetNormalData()
-{
-    return verticesNormalData;
-}
-
-float UMeshMarchingCube::distanceSquare(FVector v1, FVector v2)
-{
-    float distance1 = (v2.X - v1.X) * (v2.X - v1.X);
-    float distance2 = (v2.Y - v1.Y) * (v2.Y - v1.Y);
-    float distance3 = (v2.Z - v1.Z) * (v2.Z - v1.Z);
-
-    float combined = distance1 + distance2 + distance3;
-
-    return (float)FGenericPlatformMath::Sqrt(combined);
-}
-
 // Initialization
 void UMeshMarchingCube::CalculateCellData(MarchingCubeCell &cell, uint32 x, uint32 y, uint32 z)
 {
@@ -354,7 +296,7 @@ void UMeshMarchingCube::CalculateCellData(MarchingCubeCell &cell, uint32 x, uint
 //
 //
 //
-//
+//  THIS IS THE PART USED
 //
 //
 //
@@ -365,11 +307,11 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
 {
     // copy cutoff from valuable
     float isolevel = noiseCutoff;
-    int ConfigurationValue = 0;
 
     // Used to create UV index
-    int index0, index1, index2 = 0;
-    int32 count = 0;
+    int32 index0 = 0, index1 = index0, index2 = index0, count = index0, ConfigurationValue = index0;
+
+    // ConfigurationValue can be a int but made it match the others quicker setup
 
     // create a vertex list
     FVector vertlist[12];
@@ -377,10 +319,16 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
     // Create a cell here so faster reset
     MarchingCubeCell cell;
 
-    FVector scale = (inBoundaryRegionMax - inBoundaryRegionMin) / (float)cubeSize; // 78.125
+    // Create scale based on region and cube size
+    // Increase size more points
+    // FVector scale = (inBoundaryRegionMax - inBoundaryRegionMin) / (float)cubeSize;
+    // Note: Not needed was created to confirm scale
+
+    // Triangle position - produced one to make sure it's constantly not repeated
+    FVector trianglepoint0 = FVector(0.0f, 0.0f, 0.0f), trianglepoint1 = trianglepoint0, trianglepoint2 = trianglepoint0;
 
     // cubesize wouldl usemaxlod
-    UE_LOG(LogTemp, Warning, TEXT("Marching Cube - Cube Size %d, %s"), cubeSize, *scale.ToString());
+    UE_LOG(LogTemp, Warning, TEXT("PolygonizationV2 Process"));
 
     // get all eight points and determine the configuration
     for (int32 z = 0; z < cubeSize; z++)
@@ -443,9 +391,6 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
                     vertlist[11] =
                         VertexInterp(isolevel, cell.v[3], cell.v[7], cell.val[3], cell.val[7]);
 
-                // Produce once
-                FVector trianglepoint0, trianglepoint1, trianglepoint2;
-
                 /* Create the triangle */
                 for (int i = 0; triTable[ConfigurationValue][i] != -1; i += 3)
                 {
@@ -475,10 +420,11 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
         }
     }
 
+    // Debug Log
     UE_LOG(LogTemp, Warning, TEXT("Generated Vertices %d  Triangles %d"), verticesPolygonizationData.Num(), trianglesPolygonizationData.Num());
 }
 
-// Initialization
+// Calculate Cell Data V2
 void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, uint32 y, uint32 z, FVector inBoundaryRegionMin, FVector inBoundaryRegionMax)
 {
     // Declared once
@@ -487,11 +433,12 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
     // Use VPosition - Declare once to increase speed
     FVector vPosition = FVector(0.0f, 0.0f, 0.0f);
 
+    // Distance from center of
     float distancefromcenter = 0;
 
     // temporary to calculate terrain
-    Vect3 newPosition;
-    Vect3 Results;
+    Vect3 newPosition = Vect3(0.0f, 0.0f, 0.0f);
+    Vect3 Results = Vect3(0.0f, 0.0f, 0.0f);
 
     // should match size
     FVector scale = (inBoundaryRegionMax - inBoundaryRegionMin) / (float)cubeSize;
@@ -506,12 +453,14 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         vPosition.X = (x + VPoints[cubepoint].X) * (float)scale.X;
         vPosition.Y = (y + VPoints[cubepoint].Y) * (float)scale.Y;
         vPosition.Z = (z + VPoints[cubepoint].Z) * (float)scale.Z;
-        
+
+        vPosition = vPosition + inBoundaryRegionMin;
+
         // set value
         cell.v[cubepoint] = vPosition;
 
         // distance from center
-        distancefromcenter = FGenericPlatformMath::Abs(distanceSquare(vPosition + inBoundaryRegionMin, FVector(0.0f,0.0f,0.0f)));
+        distancefromcenter = FGenericPlatformMath::Abs(distanceSquare(vPosition, FVector(0.0f, 0.0f, 0.0f)));
 
         // convert point to space
         newPosition.x = vPosition.X + inBoundaryRegionMin.X;
@@ -530,7 +479,7 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         // Use terrain noise to create meight height
         testNoise = testNoise + coreLevel;
 
-        if (FGenericPlatformMath::Abs(distancefromcenter) > 1000.0f)
+        if (distancefromcenter > 4000.0f)
         {
             noiseValue = 0;
         }
@@ -538,6 +487,12 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         {
             noiseValue = 1;
         }
+
+        //
+        // PUT IN CODE ONCE EVERYTHING ELSE IS FIGURED OUT
+        //
+        // TODO: Create noise child of god like function outside of this
+        //
 
         // make sure height is not used
         /*   if (distancefromcenter < testNoise)
@@ -574,4 +529,74 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         // copy noise value - should be more effiecent
         cell.val[cubepoint] = noiseValue;
     }
+}
+
+// Vertex Intrepretation
+FVector UMeshMarchingCube::VertexInterp(float isolevel, FVector p1, FVector p2, double valp1, double valp2)
+{
+    // Needed Valuables
+
+    double mu;
+    FVector p;
+
+    if (UKismetMathLibrary::Abs(isolevel - valp1) < 0.00001)
+        return (p1);
+    if (UKismetMathLibrary::Abs(isolevel - valp2) < 0.00001)
+        return (p2);
+    if (UKismetMathLibrary::Abs(valp1 - valp2) < 0.00001)
+        return (p1);
+    mu = (isolevel - valp1) / (valp2 - valp1);
+    p.X = p1.X + mu * (p2.X - p1.X);
+    p.Y = p1.Y + mu * (p2.Y - p1.Y);
+    p.Z = p1.Z + mu * (p2.Z - p1.Z);
+
+    return (p);
+}
+
+// distance square alogirthm
+float UMeshMarchingCube::distanceSquare(FVector v1, FVector v2)
+{
+    float distance1 = (v2.X - v1.X) * (v2.X - v1.X);
+    float distance2 = (v2.Y - v1.Y) * (v2.Y - v1.Y);
+    float distance3 = (v2.Z - v1.Z) * (v2.Z - v1.Z);
+
+    float combined = distance1 + distance2 + distance3;
+
+    return (float)FGenericPlatformMath::Sqrt(combined);
+}
+
+// Getter
+TArray<FVector> UMeshMarchingCube::GetVerticesData()
+{
+    return verticesData;
+}
+
+// Getter
+TArray<int32> UMeshMarchingCube::GetTrianglesData()
+{
+    return trianglesData;
+}
+
+// Getter
+TArray<FVector> UMeshMarchingCube::GetTangentXData()
+{
+    return tangentXData;
+}
+
+// Getter
+TArray<FVector> UMeshMarchingCube::GetTangentZData()
+{
+    return tangentZData;
+}
+
+// Getter
+TArray<FVector2D> UMeshMarchingCube::GetColorData()
+{
+    return colorData;
+}
+
+// Getter
+TArray<FVector> UMeshMarchingCube::GetNormalData()
+{
+    return verticesNormalData;
 }

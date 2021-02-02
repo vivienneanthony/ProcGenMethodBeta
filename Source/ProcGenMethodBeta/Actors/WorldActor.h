@@ -99,7 +99,10 @@ protected:
 
 	// Runtime work the above fails
 	URuntimeMeshComponent *component_RMC = nullptr;
-	
+
+	// Scene Component
+	USceneComponent *RootComponent = nullptr;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

@@ -145,8 +145,10 @@ public:
         return std::sqrt(((x - rhs.x) * (x - rhs.x)) + ((y - rhs.y) * (y - rhs.y)) + ((z - rhs.z) * (z - rhs.z)));
     };
 
+    // Cubize Point Algorithm
     Vect3 cubizePoint();
 
+    // ProjectCubeToSphere
     void ProjectCubizeToCubeXYZ();
 };
 
@@ -156,12 +158,12 @@ public:
     // constructor and deconstructor
     PointV3()
     {
-       
+        v = Vect3(0.0f, 0.0f, 0.0f);
+        n = Vect3(0.0f, 0.0f, 0.0f);
     };
 
-    ~PointV3()
-    {
-        
+    ~PointV3(){
+
     };
 
     Vect3 v;

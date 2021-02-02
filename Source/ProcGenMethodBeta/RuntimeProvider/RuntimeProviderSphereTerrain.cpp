@@ -66,8 +66,8 @@ void URuntimeProviderSphereTerrain::Initialize()
     Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
 
     // Generate Octree
-    rootOctreeNode.BoundRegion.Min = Vect3(-10000.0f, -10000.0f, -10000.0f);
-    rootOctreeNode.BoundRegion.Max = Vect3(10000.0f, 10000.0f, 10000.0f);
+    rootOctreeNode.BoundRegion.Min = Vect3(-20000.0f, -20000.0f, -20000.0f);
+    rootOctreeNode.BoundRegion.Max = Vect3(20000.0f, 20000.0f, 20000.0f);
 
     // Generate Tree Base On Max Lod
     rootOctreeNode.BuildTree(MAXOCTREENODEDEPTH);
@@ -92,9 +92,6 @@ void URuntimeProviderSphereTerrain::Initialize()
 // Get section would change for getsection based on some value
 bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData)
 {
-    // We should only ever be queried for section 0 and lod 0
-    //check(SectionId == 0 && LODIndex == 0);
-
     // Write Long if marching cube can't be created
     if (!ptrMarchingCube)
     {
@@ -150,18 +147,19 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
     FString valid = "Valid";
     FString invalid = "Invalid";
 
+    // Check mesh data validty
     if (testMesh == true)
     {
         UE_LOG(LogTemp, Warning, TEXT("Mesh Data %s"), *valid);
 
-       // FReadScopeLock Lock(ModifierRWLock);
+        // FReadScopeLock Lock(ModifierRWLock);
 
-       // for (int i = 0; i < CurrentMeshModifiers.Num(); i++)
+        // for (int i = 0; i < CurrentMeshModifiers.Num(); i++)
         //{
         //    if (CurrentMeshModifiers[i])
-         //   {
-         //       CurrentMeshModifiers[i]->ApplyToMesh(MeshData);
-       //     }
+        //   {
+        //       CurrentMeshModifiers[i]->ApplyToMesh(MeshData);
+        //     }
         //}//
     }
     else
@@ -175,7 +173,7 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
 
 FBoxSphereBounds URuntimeProviderSphereTerrain::GetBounds()
 {
-    return FBoxSphereBounds(FSphere(FVector::ZeroVector, SphereRadius));
+    return FBoxSphereBounds(FBox(FVector(-SphereRadius,-SphereRadius,-SphereRadius), FVector(SphereRadius,SphereRadius,SphereRadius)));
 }
 
 float URuntimeProviderSphereTerrain::GetSphereRadius() const

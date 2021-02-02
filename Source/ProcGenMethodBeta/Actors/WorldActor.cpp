@@ -13,10 +13,20 @@ AWorldActor::AWorldActor()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	// Create a root scene component
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
+
+	// Set mobility to static
+	if (RootComponent != nullptr)
+	{
+		// Write Log
+		UE_LOG(LogTemp, Warning, "Scene Component Not Created"));
+	}
 }
 
 // Construction
-void AWorldActor::OnConstruction(const FTransform & Transform)
+void AWorldActor::OnConstruction(const FTransform &Transform)
 {
 	Super::OnConstruction(Transform);
 }
@@ -74,21 +84,25 @@ void AWorldActor::SetMarchingCubeNoiseDefaults()
 // Test
 void AWorldActor::TestSphereProvider()
 {
+	// Create A RuntimeMesh Provider
 	URuntimeMeshProviderSphere *SphereProvider = NewObject<URuntimeMeshProviderSphere>(this, TEXT("RuntimeMeshProvider-Sphere"));
 
+	// If setup
 	if (SphereProvider)
 	{
+		// If Runtimemesh provider is created
 		if (component_RMC)
 		{
-			// Set default
-			SphereProvider->SetSphereRadius(1000.0f);
+			// Set Sphere Radius Default
+			SphereProvider->SetSphereRadius(20000.0f);
 
+			// If material set material if it exist
 			if (Material)
 			{
 				SphereProvider->SetSphereMaterial(Material);
 			}
 
-			// test initialize
+			// Initialize
 			component_RMC->Initialize(SphereProvider);
 		}
 	}
@@ -125,12 +139,12 @@ void AWorldActor::TestProviderSphereTerrain()
 
 			// Set Marching Cube Parameters
 			SphereTerrainProvider->SetMarchingCubeParameters(outParameters);
-			
+
 			// Set Material
 			SphereTerrainProvider->SetSphereMaterial(Material);
 
 			// test initialize
-			component_RMC->Initialize(SphereTerrainProvider);				
+			component_RMC->Initialize(SphereTerrainProvider);
 		}
 	}
 }
