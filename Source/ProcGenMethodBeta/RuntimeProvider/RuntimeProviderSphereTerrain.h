@@ -50,6 +50,9 @@ public:
 	UPROPERTY()
 	UMeshMarchingCube *ptrMarchingCube = nullptr;
 
+	// Override standard create section
+	virtual void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties& SectionProperties) override;
+
 protected:
 	// Initialize
 	virtual void Initialize() override;
@@ -66,12 +69,39 @@ protected:
 	// Marching Cube Parameters
 	FMeshMarchingCubeParameters configMeshMarchingCubeParameters;
 
+	// Collision - Has to tell Unreal theres a collision
+	bool HasCollisionMesh() override;
+
+	// Get collision mesh
+	bool GetCollisionMesh(FRuntimeMeshCollisionData &CollisionData);
+
+	// Get collision settings
+	FRuntimeMeshCollisionSettings GetCollisionSettings();
+
+	UPROPERTY()
+	FRuntimeMeshCollisionData CollisionMesh;
+
 private:
+	// mutable critical
 	mutable FCriticalSection PropertySyncRoot;
+	
+	mutable FCriticalSection MeshSyncRoot;
+	mutable FCriticalSection CollisionSyncRoot;
+
+	// mutable locks
 	mutable FRWLock ModifierRWLock;
+
+	// SectionDataEntry
+	using FSectionDataMapEntry = TTuple<FRuntimeMeshSectionProperties, FRuntimeMeshRenderableMeshData, FBoxSphereBounds>;
+
+	// Section Map Data
+	TMap<int32, TMap<int32, FSectionDataMapEntry>> SectionDataMap;
 
 	// Array
 	TArray<URuntimeMeshModifier *> CurrentMeshModifiers;
+
+	// Sections For Collision
+	TSet<int32> SectionsForMeshCollision;
 
 	// Root Octree
 	OctreeNode rootOctreeNode;
@@ -81,4 +111,19 @@ private:
 
 	// Material
 	UMaterialInterface *AutoTerrainMaterial;
+
+	// Create Section
+	void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties, FRuntimeMeshRenderableMeshData &&SectionData, bool bCreateCollision = true)
+	{
+		// This creates a section
+		CreateSection(LODIndex, SectionId, SectionProperties);
+
+		// not sure
+		//UpdateSectionInternal(LODIndex, SectionId, MoveTemp(SectionData), GetBoundsFromMeshData(SectionData));
+
+		//UpdateSectionAffectsCollision(LODIndex, SectionId, bCreateCollision);
+	}
+
+	// Update Section Internal
+	void UpdateSectionInternal(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &&SectionData, FBoxSphereBounds KnownBounds);
 };

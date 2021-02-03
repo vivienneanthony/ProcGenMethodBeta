@@ -7,7 +7,7 @@
 
 // Using LODDOF FOR DETAIL LEVEL PER NODE
 
-#define MAXOCTREENODEDEPTH 2
+#define MAXOCTREENODEDEPTH 3
 
 URuntimeMeshProviderSphere::URuntimeMeshProviderSphere()
     : MaxLOD(0), SphereRadius(20000.0f)
@@ -82,16 +82,20 @@ void URuntimeProviderSphereTerrain::Initialize()
     for (unsigned int section = 0; section < OctreeNodeSections.Num(); section++)
     {
         // CreateDefault Section
-        CreateSection(0, section, Properties);
+        this->CreateSection(0, section, Properties);
     }
 
     // Mark collision dirty not used
+    // If this is correct this should tell runtime to get the collision mesh
     MarkCollisionDirty();
 }
 
 // Get section would change for getsection based on some value
 bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData)
 {
+    // We should only ever be queried for section 0 and lod 0
+    //check(SectionId == 0 && LODIndex == 0);
+
     // Write Long if marching cube can't be created
     if (!ptrMarchingCube)
     {
@@ -152,19 +156,19 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
     {
         UE_LOG(LogTemp, Warning, TEXT("Mesh Data %s"), *valid);
 
-        // FReadScopeLock Lock(ModifierRWLock);
-
+        //FReadScopeLock Lock(ModifierRWLock);
         // for (int i = 0; i < CurrentMeshModifiers.Num(); i++)
         //{
-        //    if (CurrentMeshModifiers[i])
-        //   {
-        //       CurrentMeshModifiers[i]->ApplyToMesh(MeshData);
-        //     }
-        //}//
+        //     if (CurrentMeshModifiers[i])
+        //    {
+        //        CurrentMeshModifiers[i]->ApplyToMesh(MeshData);
+        //    }
+        //}
     }
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("Mesh Data %s"), *invalid);
+
         return false;
     }
 
@@ -173,7 +177,7 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
 
 FBoxSphereBounds URuntimeProviderSphereTerrain::GetBounds()
 {
-    return FBoxSphereBounds(FBox(FVector(-SphereRadius,-SphereRadius,-SphereRadius), FVector(SphereRadius,SphereRadius,SphereRadius)));
+    return FBoxSphereBounds(FBox(FVector(-SphereRadius, -SphereRadius, -SphereRadius), FVector(SphereRadius, SphereRadius, SphereRadius)));
 }
 
 float URuntimeProviderSphereTerrain::GetSphereRadius() const
@@ -204,4 +208,168 @@ void URuntimeProviderSphereTerrain::SetSphereMaterial(UMaterialInterface *InSphe
     FScopeLock Lock(&PropertySyncRoot);
     AutoTerrainMaterial = InSphereMaterial;
     this->SetupMaterialSlot(0, FName("Auto Terrain Material"), AutoTerrainMaterial);
+}
+
+bool URuntimeProviderSphereTerrain::HasCollisionMesh()
+{
+
+    int32 LODForMeshCollisionTemp = 0;
+    TSet<int32> SectionsForMeshCollisionTemp;
+
+    {
+        FScopeLock Lock(&CollisionSyncRoot);
+
+        // Temporary
+        LODForMeshCollisionTemp = 0;
+        SectionsForMeshCollisionTemp = SectionsForMeshCollision;
+    }
+
+    {
+        FScopeLock Lock(&MeshSyncRoot);
+        TMap<int32, FSectionDataMapEntry> *LODSections = SectionDataMap.Find(LODForMeshCollisionTemp);
+        if (LODSections)
+        {
+            for (int32 SectionId : SectionsForMeshCollisionTemp)
+            {
+                FSectionDataMapEntry *Section = LODSections->Find(SectionId);
+                if (Section)
+                {
+                    if (Section->Get<1>().HasValidMeshData())
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+// true true
+FRuntimeMeshCollisionSettings URuntimeProviderSphereTerrain::GetCollisionSettings()
+{
+    // Create a colision settings
+    FRuntimeMeshCollisionSettings Settings;
+    Settings.bUseAsyncCooking = false;
+    Settings.bUseComplexAsSimple = false;
+
+    return Settings;
+}
+
+bool URuntimeProviderSphereTerrain::GetCollisionMesh(FRuntimeMeshCollisionData &CollisionData)
+{
+    // Test Loaded on Initial
+    //UE_LOG(LogTemp, Warning, TEXT("Get collision mesh called %d"), 1);
+
+    int32 LODForMeshCollisionTemp = INDEX_NONE;
+    TSet<int32> SectionsForMeshCollisionTemp;
+    bool bHadMeshData = false;
+
+    FScopeLock Lock(&MeshSyncRoot);
+    TMap<int32, FSectionDataMapEntry> *LODSections = SectionDataMap.Find(LODForMeshCollisionTemp);
+    if (LODSections)
+    {
+        for (int32 SectionId : SectionsForMeshCollisionTemp)
+        {
+            FSectionDataMapEntry *Section = LODSections->Find(SectionId);
+            if (Section)
+            {
+                FRuntimeMeshRenderableMeshData &SectionData = Section->Get<1>();
+                if (SectionData.HasValidMeshData())
+                {
+                    int32 FirstVertex = CollisionData.Vertices.Num();
+                    int32 NumVertex = SectionData.Positions.Num();
+                    int32 NumTexCoords = SectionData.TexCoords.Num();
+                    int32 NumChannels = SectionData.TexCoords.NumChannels();
+                    CollisionData.Vertices.SetNum(FirstVertex + NumVertex, false);
+                    CollisionData.TexCoords.SetNum(NumChannels, FirstVertex + NumVertex, false);
+                    for (int32 VertIdx = 0; VertIdx < NumVertex; VertIdx++)
+                    {
+                        CollisionData.Vertices.SetPosition(FirstVertex + VertIdx, SectionData.Positions.GetPosition(VertIdx));
+                        if (VertIdx >= NumTexCoords)
+                        {
+                            continue;
+                        }
+                        for (int32 ChannelIdx = 0; ChannelIdx < NumChannels; ChannelIdx++)
+                        {
+                            CollisionData.TexCoords.SetTexCoord(ChannelIdx, FirstVertex + VertIdx, SectionData.TexCoords.GetTexCoord(VertIdx, ChannelIdx));
+                        }
+                    }
+
+                    int32 FirstTris = CollisionData.Triangles.Num();
+                    int32 NumTriangles = SectionData.Triangles.NumTriangles();
+                    CollisionData.Triangles.SetNum(FirstTris + NumTriangles, false);
+                    CollisionData.MaterialIndices.SetNum(FirstTris + NumTriangles, false);
+                    for (int32 TrisIdx = 0; TrisIdx < NumTriangles; TrisIdx++)
+                    {
+                        int32 Index0 = SectionData.Triangles.GetVertexIndex(TrisIdx * 3) + FirstVertex;
+                        int32 Index1 = SectionData.Triangles.GetVertexIndex(TrisIdx * 3 + 1) + FirstVertex;
+                        int32 Index2 = SectionData.Triangles.GetVertexIndex(TrisIdx * 3 + 2) + FirstVertex;
+
+                        CollisionData.Triangles.SetTriangleIndices(TrisIdx + FirstTris, Index0, Index1, Index2);
+                        CollisionData.MaterialIndices.SetMaterialIndex(TrisIdx + FirstTris, Section->Get<0>().MaterialSlot);
+                    }
+
+                    CollisionData.CollisionSources.Emplace(FirstTris, CollisionData.Triangles.Num() - 1, this, SectionId, ERuntimeMeshCollisionFaceSourceType::Renderable);
+                    bHadMeshData = true;
+                }
+            }
+        }
+    }
+
+    return bHadMeshData;
+}
+
+void URuntimeProviderSphereTerrain::UpdateSectionInternal(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &&SectionData, FBoxSphereBounds KnownBounds)
+{
+    // This is just to alert the user of invalid mesh data
+    SectionData.HasValidMeshData(true);
+
+    {
+        FReadScopeLock Lock(ModifierRWLock);
+
+        for (URuntimeMeshModifier *Modifier : CurrentMeshModifiers)
+        {
+            check(Modifier->IsValidLowLevel());
+
+            Modifier->ApplyToMesh(SectionData);
+        }
+    }
+
+    {
+        FScopeLock Lock(&MeshSyncRoot);
+        TMap<int32, FSectionDataMapEntry> *LODSections = SectionDataMap.Find(LODIndex);
+        if (LODSections)
+        {
+            FSectionDataMapEntry *Section = LODSections->Find(SectionId);
+            if (Section)
+            {
+                (*Section) = MakeTuple(Section->Get<0>(), SectionData, KnownBounds);
+
+                //UpdateBounds();
+                MarkSectionDirty(LODIndex, SectionId);
+            }
+        }
+    }
+
+    {
+        FScopeLock Lock(&CollisionSyncRoot);
+        if ((LODIndex = 0) && SectionsForMeshCollision.Contains(SectionId))
+        {
+            MarkCollisionDirty();
+        }
+    }
+}
+
+// Replacement Create Section Is Called
+void URuntimeProviderSphereTerrain::CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties)
+{
+    {
+        // This should add a section id
+        FScopeLock Lock(&MeshSyncRoot);
+        SectionDataMap.FindOrAdd(LODIndex).FindOrAdd(SectionId) = MakeTuple(SectionProperties, FRuntimeMeshRenderableMeshData(), FBoxSphereBounds(FVector(-SphereRadius, -SphereRadius, -SphereRadius), FVector(SphereRadius, SphereRadius, SphereRadius), 0));
+    }
+
+    URuntimeMeshProvider::CreateSection(LODIndex, SectionId, SectionProperties);
 }
