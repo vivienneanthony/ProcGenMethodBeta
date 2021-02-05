@@ -51,7 +51,10 @@ public:
 	UMeshMarchingCube *ptrMarchingCube = nullptr;
 
 	// Override standard create section
-	virtual void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties& SectionProperties) override;
+	virtual void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties) override;
+
+	UFUNCTION(Category = "RuntimeMesh|Providers|Collision", BlueprintCallable)
+	void SetRenderableSectionAffectsCollision(int32 SectionId, bool bCollisionEnabled);
 
 protected:
 	// Initialize
@@ -73,20 +76,24 @@ protected:
 	bool HasCollisionMesh() override;
 
 	// Get collision mesh
-	bool GetCollisionMesh(FRuntimeMeshCollisionData &CollisionData);
+	bool GetCollisionMesh(FRuntimeMeshCollisionData &CollisionData) override;
 
 	// Get collision settings
 	FRuntimeMeshCollisionSettings GetCollisionSettings();
 
-	UPROPERTY()
+	TMap<int32, FRuntimeMeshRenderableCollisionData> RenderableCollisionData;
+
+	TSet<int32> SectionsAffectingCollision;
+
 	FRuntimeMeshCollisionData CollisionMesh;
 
 private:
 	// mutable critical
 	mutable FCriticalSection PropertySyncRoot;
-	
+
 	mutable FCriticalSection MeshSyncRoot;
 	mutable FCriticalSection CollisionSyncRoot;
+	mutable FCriticalSection SyncRoot;
 
 	// mutable locks
 	mutable FRWLock ModifierRWLock;

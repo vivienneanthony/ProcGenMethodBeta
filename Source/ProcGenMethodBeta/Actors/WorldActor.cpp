@@ -18,10 +18,10 @@ AWorldActor::AWorldActor()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
 
 	// Set mobility to static
-	if (RootComponent != nullptr)
+	if (RootComponent == nullptr)
 	{
 		// Write Log
-		UE_LOG(LogTemp, Warning, "Scene Component Not Created"));
+		//UE_LOG(LogTemp, Warning, "Scene Component Not Created"));
 	}
 }
 
