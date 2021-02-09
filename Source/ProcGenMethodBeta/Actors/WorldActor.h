@@ -101,8 +101,8 @@ protected:
 	URuntimeMeshComponent *component_RMC = nullptr;
 
 	// Scene Component
-	USceneComponent *RootComponent = nullptr;
-
+	USceneComponent * SceneComponent = nullptr;
+	
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

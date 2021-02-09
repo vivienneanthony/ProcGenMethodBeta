@@ -7,16 +7,15 @@
 
 // Using LODDOF FOR DETAIL LEVEL PER NODE
 
-#define MAXOCTREENODEDEPTH 2
+#define MAXOCTREENODEDEPTH 3
 
 URuntimeMeshProviderSphere::URuntimeMeshProviderSphere()
     : MaxLOD(0), SphereRadius(20000.0f)
 {
-    MaxLOD = GetMaxNumberOfLODs() - 1;
+    // Set MaxLod to 0
+    //MaxLOD = GetMaxNumberOfLODs() - 1;
 
-    // Set Octree to half the radius or full depending on how to set the bounds
-    // Maxlod of octree can be set to MaxLOD
-    MaxLOD = 10;
+    //MaxLOD = 10;
 }
 
 // Initialize
@@ -89,6 +88,8 @@ void URuntimeProviderSphereTerrain::Initialize()
 
     // Mark Collision Dirty
     MarkCollisionDirty();
+
+    
 }
 
 // Get section for a specific LOD
@@ -122,6 +123,8 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
     // Write Log
     UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Copy to MeshData (Could be a memory move)"));
 
+    bool bTriangleGenerated = false;
+
     auto AddVertex = [&](const FVector &InPosition, const FVector &InTangentX, const FVector &InTangentZ, const FVector2D &InTexCoord) {
         MeshData.Positions.Add(InPosition);
         MeshData.Tangents.Add(InTangentZ, InTangentX);
@@ -140,6 +143,22 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
     for (uint32 i = 0; i < triangles.Num(); i += 3)
     {
         MeshData.Triangles.AddTriangle(triangles[i], triangles[i + 1], triangles[i + 2]);
+
+        if (bTriangleGenerated == false)
+        {
+            bTriangleGenerated = true;
+        }
+    }
+
+    // Check mesh data validty - Quick change
+    if (bTriangleGenerated == false)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Mesh Data %d - No triangle generated "), SectionId);
+
+        // Remove from renderable
+        SetRenderableSectionAffectsCollision(SectionId, false);
+
+        return false;
     }
 
     // Write Log
@@ -173,6 +192,18 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
         SectionCacheData = FRuntimeMeshRenderableCollisionData(MeshData);
         MarkCollisionDirty();
     }
+
+    // If Data is valid
+   /* if (MeshData.HasValidMeshData())
+    {
+        for (int32 Index = 0; Index < CurrentMeshModifiers.Num(); Index++)
+        {
+            if (CurrentMeshModifiers[Index])
+            {
+                CurrentMeshModifiers[Index]->ApplyToMesh(MeshData);
+            }
+        }
+    }*/
 
     return true;
 }
@@ -224,6 +255,8 @@ bool URuntimeProviderSphereTerrain::HasCollisionMesh()
     FScopeLock Lock(&SyncRoot);
     return (CollisionMesh.Vertices.Num() > 0 && CollisionMesh.Triangles.Num() > 0) ||
            RenderableCollisionData.Num() > 0;
+
+    return true;
 }
 
 // Get collision settings
@@ -231,8 +264,8 @@ FRuntimeMeshCollisionSettings URuntimeProviderSphereTerrain::GetCollisionSetting
 {
     // Create a colision settings
     FRuntimeMeshCollisionSettings Settings;
-    Settings.bUseAsyncCooking = false;
-    Settings.bUseComplexAsSimple = false;
+    Settings.bUseAsyncCooking = true;
+    Settings.bUseComplexAsSimple = true;
 
     return Settings;
 }

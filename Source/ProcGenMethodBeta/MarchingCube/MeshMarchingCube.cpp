@@ -421,7 +421,7 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
     }
 
     // Debug Log
-    UE_LOG(LogTemp, Warning, TEXT("Generated Vertices %d  Triangles %d"), verticesPolygonizationData.Num(), trianglesPolygonizationData.Num());
+    //UE_LOG(LogTemp, Warning, TEXT("Generated Vertices %d  Triangles %d"), verticesPolygonizationData.Num(), trianglesPolygonizationData.Num());
 }
 
 // Calculate Cell Data V2
@@ -463,9 +463,9 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         distancefromcenter = FGenericPlatformMath::Abs(distanceSquare(vPosition, FVector(0.0f, 0.0f, 0.0f)));
 
         // convert point to space
-        newPosition.x = vPosition.X + inBoundaryRegionMin.X;
-        newPosition.y = vPosition.Y + inBoundaryRegionMin.Y;
-        newPosition.z = vPosition.Z + inBoundaryRegionMin.Z;
+        newPosition.x = vPosition.X;
+        newPosition.y = vPosition.Y;
+        newPosition.z = vPosition.Z;
 
         // Calculate xyz to a cube space
         Results = newPosition.cubizePoint();
@@ -474,19 +474,21 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         Results.ProjectCubizeToCubeXYZ();
 
         // Create terrain increase height - can be a valuable
-        testNoise = FMath::Clamp((float)fastNoiseWrapperTerrain->GetNoise3D(Results.x, Results.y, Results.z), 0.0f, 1.0f) * 1000.0;
+        testNoise = FMath::Clamp((float)fastNoiseWrapperTerrain->GetNoise3D(Results.x, Results.y, Results.z), 0.0f, 1.0f) * 2000.0;
 
         // Use terrain noise to create meight height
         testNoise = testNoise + coreLevel;
 
-        if (distancefromcenter > 4000.0f)
-        {
-            noiseValue = 0;
-        }
-        else
-        {
-            noiseValue = 1;
-        }
+        //if (distancefromcenter > 4000.0f)
+        //{
+        //    noiseValue = 0;
+        //}
+        //else
+        //{
+        //noiseValue = 1;
+        //}
+
+        //distancefromcenter =  4000.0f;
 
         //
         // PUT IN CODE ONCE EVERYTHING ELSE IS FIGURED OUT
@@ -495,13 +497,14 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         //
 
         // make sure height is not used
-        /*   if (distancefromcenter < testNoise)
+        if (distancefromcenter < testNoise)
         {
+
             // Getnoisewarapper
             noiseValue = fastNoiseWrapper->GetNoise3D(vPosition.X, vPosition.Y, vPosition.Z);
 
             // make sure distance above core level
-            if ((distancefromcenter > coreLevel - 600) && (distancefromcenter < (coreLevel + 300)))
+            if ((distancefromcenter > coreLevel - 400) && (distancefromcenter < (coreLevel + 200)))
             {
                 // cut off based on noise
                 if (noiseValue > noiseCutoff)
@@ -524,7 +527,7 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         {
             // mustbe external
             noiseValue = 0;
-        }*/
+        }
 
         // copy noise value - should be more effiecent
         cell.val[cubepoint] = noiseValue;

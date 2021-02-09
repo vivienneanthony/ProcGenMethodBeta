@@ -53,7 +53,7 @@ public:
 	// Override standard create section
 	virtual void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties) override;
 
-	UFUNCTION(Category = "RuntimeMesh|Providers|Collision", BlueprintCallable)
+	///UFUNCTION(Category = "RuntimeMesh|Providers|Collision", BlueprintCallable)
 	void SetRenderableSectionAffectsCollision(int32 SectionId, bool bCollisionEnabled);
 
 protected:

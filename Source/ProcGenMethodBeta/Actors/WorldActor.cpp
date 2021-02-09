@@ -4,6 +4,8 @@
 
 #include "Providers/RuntimeMeshProviderSphere.h"
 #include "Providers/RuntimeMeshProviderStatic.h"
+
+#include "Providers/RuntimeMeshProviderCollision.h"
 #include "../RuntimeProvider/RuntimeProviderSphereTerrain.h"
 
 #include <cstdlib>
@@ -14,15 +16,32 @@ AWorldActor::AWorldActor()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Make sure object exist
+	if (component_RMC == nullptr)
+	{
+		component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));
+
+		RootComponent = component_RMC;
+
+		component_RMC->Mobility = EComponentMobility::Static;
+	}
+
+	if (component_MC == nullptr)
+	{
+		component_MC = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
+	}
+
 	// Create a root scene component
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
+	//SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
+
+	//RootComponent = SceneComponent;
 
 	// Set mobility to static
-	if (RootComponent == nullptr)
-	{
-		// Write Log
-		//UE_LOG(LogTemp, Warning, "Scene Component Not Created"));
-	}
+	//if (RootComponent == nullptr)
+	//{
+	// Write Log
+	//UE_LOG(LogTemp, Warning, "Scene Component Not Created"));
+	//}
 }
 
 // Construction
@@ -36,16 +55,19 @@ void AWorldActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Make sure object exist
+	/* Make sure object exist
 	if (component_RMC == nullptr)
 	{
 		component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));
+
+		RootComponent = compo
 	}
 
 	if (component_MC == nullptr)
 	{
 		component_MC = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
 	}
+	*/
 
 	// Test static
 	TestProviderSphereTerrain();
@@ -90,6 +112,9 @@ void AWorldActor::TestSphereProvider()
 	// If setup
 	if (SphereProvider)
 	{
+
+		RootComponent = component_RMC;
+
 		// If Runtimemesh provider is created
 		if (component_RMC)
 		{
