@@ -88,12 +88,54 @@ void URuntimeProviderSphereTerrain::Initialize()
 
     // Mark Collision Dirty
     MarkCollisionDirty();
+}
 
-    
+bool URuntimeProviderSphereTerrain ::GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData)
+{
+    // Get Section Data here
+    FSectionDataMapEntry *Section = SectionDataMap.Find(SectionId);
+
+    // return these results
+    if (Section)
+    {
+        // Get section data
+        bool result = GenerateSectionData(LODIndex, SectionId, Section->Get<1>());
+
+        if (result)
+        {
+            // Apply bodifiers
+            if (Section->Get<1>().HasValidMeshData())
+            {
+                FReadScopeLock Lock(ModifierRWLock);
+
+                // Only use the first modifier
+                URuntimeMeshModifierNormals *modifier = (URuntimeMeshModifierNormals *)CurrentMeshModifiers[0];
+
+                // Smooth (I think the mesh was applying all modifiers messing with the data)
+                modifier->CalculateNormalsTangents(Section->Get<1>(), true);
+            }
+
+            // Set Mesh Data
+            MeshData = Section->Get<1>();
+
+            //Set this to affect collision
+            SetRenderableSectionAffectsCollision(SectionId, true);
+
+            return true;
+        }
+        else
+        {
+            SetRenderableSectionAffectsCollision(SectionId, false);
+        }
+
+        return false;
+    }
+
+    return false;
 }
 
 // Get section for a specific LOD
-bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData)
+bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &SectionData)
 {
 
     // Write Long if marching cube can't be created
@@ -121,19 +163,24 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
     ptrMarchingCube->PolygonizationV2(polygonizationBoundRegionMin, polygonizationBoundRegionMax, positions, triangles);
 
     // Write Log
-    UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Copy to MeshData (Could be a memory move)"));
+    UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Copy to SectionData (Could be a memory move)"));
 
     bool bTriangleGenerated = false;
 
     auto AddVertex = [&](const FVector &InPosition, const FVector &InTangentX, const FVector &InTangentZ, const FVector2D &InTexCoord) {
-        MeshData.Positions.Add(InPosition);
-        MeshData.Tangents.Add(InTangentZ, InTangentX);
-        MeshData.Colors.Add(FColor::White);
-        MeshData.TexCoords.Add(InTexCoord);
+        SectionData.Positions.Add(InPosition);
+        SectionData.Tangents.Add(InTangentZ, InTangentX);
+        SectionData.Colors.Add(FColor::White);
+        SectionData.TexCoords.Add(InTexCoord);
     };
 
     FVector Tangent;
     FVector2D TextCoord;
+
+    //if (positions.Num() < 3)
+    //{
+    //return false;
+    //}
 
     for (uint32 i = 0; i < positions.Num(); i++)
     {
@@ -142,7 +189,7 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
 
     for (uint32 i = 0; i < triangles.Num(); i += 3)
     {
-        MeshData.Triangles.AddTriangle(triangles[i], triangles[i + 1], triangles[i + 2]);
+        SectionData.Triangles.AddTriangle(triangles[i], triangles[i + 1], triangles[i + 2]);
 
         if (bTriangleGenerated == false)
         {
@@ -150,62 +197,12 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
         }
     }
 
-    // Check mesh data validty - Quick change
-    if (bTriangleGenerated == false)
+    if (bTriangleGenerated)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Mesh Data %d - No triangle generated "), SectionId);
-
-        // Remove from renderable
-        SetRenderableSectionAffectsCollision(SectionId, false);
-
-        return false;
+        return true;
     }
 
-    // Write Log
-    UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Copied  Vertices %d  Triangles %d"), positions.Num(), triangles.Num());
-
-    bool testMesh = MeshData.HasValidMeshData();
-
-    FString valid = "Valid";
-    FString invalid = "Invalid";
-
-    // Check mesh data validty
-    if (testMesh == false)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Mesh Data %s - Removing from renderable"), *invalid);
-
-        // Remove from renderable
-        SetRenderableSectionAffectsCollision(SectionId, false);
-
-        return false;
-    }
-
-    // Set this to affect collision
-    SetRenderableSectionAffectsCollision(SectionId, true);
-
-    // add data
-    if (SectionsAffectingCollision.Contains(SectionId))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Mesh Data %d - Section found FruntimeRenderableCollisionData"), SectionId);
-
-        FRuntimeMeshRenderableCollisionData &SectionCacheData = RenderableCollisionData.FindOrAdd(SectionId);
-        SectionCacheData = FRuntimeMeshRenderableCollisionData(MeshData);
-        MarkCollisionDirty();
-    }
-
-    // If Data is valid
-   /* if (MeshData.HasValidMeshData())
-    {
-        for (int32 Index = 0; Index < CurrentMeshModifiers.Num(); Index++)
-        {
-            if (CurrentMeshModifiers[Index])
-            {
-                CurrentMeshModifiers[Index]->ApplyToMesh(MeshData);
-            }
-        }
-    }*/
-
-    return true;
+    return false;
 }
 
 // Get Bounds
@@ -374,6 +371,16 @@ void URuntimeProviderSphereTerrain::SetRenderableSectionAffectsCollision(int32 S
 // Replacement Create Section Is Called
 void URuntimeProviderSphereTerrain::CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties)
 {
-    // Call super create section
-    Super::CreateSection(LODIndex, SectionId, SectionProperties);
+    bool generatedSection = false;
+
+    // Create a section
+    {
+        FScopeLock Lock(&MeshSyncRoot);
+        SectionDataMap.FindOrAdd(SectionId) = MakeTuple(SectionProperties, FRuntimeMeshRenderableMeshData(), FBoxSphereBounds(FVector::ZeroVector, FVector::ZeroVector, 0));
+
+        generatedSection = true;
+
+        // Call super create section
+        Super::CreateSection(LODIndex, SectionId, SectionProperties);
+    }
 }

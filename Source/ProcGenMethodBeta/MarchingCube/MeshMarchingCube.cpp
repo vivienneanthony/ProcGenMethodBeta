@@ -15,7 +15,17 @@
 // Constructor
 UMeshMarchingCube::UMeshMarchingCube()
 {
-    // Do nothing
+    // Create cavermfast noise wrapper
+    if (fastNoiseWrapper == nullptr)
+    {
+        fastNoiseWrapper = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapper"));
+    }
+
+    // Create terrain fast noise wrapper
+    if (fastNoiseWrapperTerrain == nullptr)
+    {
+        fastNoiseWrapperTerrain = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapperTerrain"));
+    }
 }
 
 void UMeshMarchingCube::SetParameters(FMeshMarchingCubeParameters inParameters)
@@ -40,17 +50,6 @@ void UMeshMarchingCube::SetParameters(FMeshMarchingCubeParameters inParameters)
 // Initializatio
 void UMeshMarchingCube::InitializeNoiseGridData()
 {
-    // Create cavermfast noise wrapper
-    if (fastNoiseWrapper == nullptr)
-    {
-        fastNoiseWrapper = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapper"));
-    }
-
-    // Create terrain fast noise wrapper
-    if (fastNoiseWrapperTerrain == nullptr)
-    {
-        fastNoiseWrapperTerrain = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapperTerrain"));
-    }
 
     // Create a fast noise and set values
     fastNoiseWrapper->SetupFastNoise();
@@ -444,16 +443,18 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
     FVector scale = (inBoundaryRegionMax - inBoundaryRegionMin) / (float)cubeSize;
 
     // check noise height
-    float testNoise = 0;
+    float surfaceHeight = 0;
+    float calculatedSurfaceLevel = 0;
 
     // Go through each point
     for (int cubepoint = 0; cubepoint < CellPointsLength; cubepoint++)
     {
-        // cakculate pixel location
-        vPosition.X = (x + VPoints[cubepoint].X) * (float)scale.X;
-        vPosition.Y = (y + VPoints[cubepoint].Y) * (float)scale.Y;
-        vPosition.Z = (z + VPoints[cubepoint].Z) * (float)scale.Z;
+        // cakculate pixel location - Could be one function - Just used this assuming regions would be different sizes
+        vPosition.X = ((float)x + (float)VPoints[cubepoint].X) * (float)scale.X;
+        vPosition.Y = ((float)y + (float)VPoints[cubepoint].Y) * (float)scale.Y;
+        vPosition.Z = ((float)z + (float)VPoints[cubepoint].Z) * (float)scale.Z;
 
+        // add VPosition
         vPosition = vPosition + inBoundaryRegionMin;
 
         // set value
@@ -462,7 +463,7 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         // distance from center
         distancefromcenter = FGenericPlatformMath::Abs(distanceSquare(vPosition, FVector(0.0f, 0.0f, 0.0f)));
 
-        // convert point to space
+        // convert point to space - Made to a Vect3 which has special functions for Vectors - Allowing this to work
         newPosition.x = vPosition.X;
         newPosition.y = vPosition.Y;
         newPosition.z = vPosition.Z;
@@ -474,48 +475,20 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         Results.ProjectCubizeToCubeXYZ();
 
         // Create terrain increase height - can be a valuable
-        testNoise = FMath::Clamp((float)fastNoiseWrapperTerrain->GetNoise3D(Results.x, Results.y, Results.z), 0.0f, 1.0f) * 2000.0;
+        surfaceHeight = FMath::Clamp((float)fastNoiseWrapperTerrain->GetNoise3D(Results.x, Results.y, Results.z), 0.0f, 1.0f) * 2000.0;
 
         // Use terrain noise to create meight height
-        testNoise = testNoise + coreLevel;
-
-        //if (distancefromcenter > 4000.0f)
-        //{
-        //    noiseValue = 0;
-        //}
-        //else
-        //{
-        //noiseValue = 1;
-        //}
-
-        //distancefromcenter =  4000.0f;
-
-        //
-        // PUT IN CODE ONCE EVERYTHING ELSE IS FIGURED OUT
-        //
-        // TODO: Create noise child of god like function outside of this
-        //
+        calculatedSurfaceLevel = surfaceHeight + coreLevel;
 
         // make sure height is not used
-        if (distancefromcenter < testNoise)
+        if (distancefromcenter < calculatedSurfaceLevel)
         {
 
-            // Getnoisewarapper
-            noiseValue = fastNoiseWrapper->GetNoise3D(vPosition.X, vPosition.Y, vPosition.Z);
-
             // make sure distance above core level
-            if ((distancefromcenter > coreLevel - 400) && (distancefromcenter < (coreLevel + 200)))
+            if ((distancefromcenter > (coreLevel - 1000)) && (distancefromcenter < coreLevel))
             {
-                // cut off based on noise
-                if (noiseValue > noiseCutoff)
-                {
-                    noiseValue = 1.0f;
-                }
-                else
-                {
-                    // use cutoff
-                    noiseValue = 0.0f;
-                }
+                // Getnoisewarapper
+                noiseValue = fastNoiseWrapper->GetNoise3D(vPosition.X, vPosition.Y, vPosition.Z);
             }
             else
             {

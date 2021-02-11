@@ -23,7 +23,7 @@ class URuntimeMeshComponent;
 UCLASS()
 class PROCGENMETHODBETA_API AWorldActor : public AActor
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 public:
 	// Sets default values for this actor's properties

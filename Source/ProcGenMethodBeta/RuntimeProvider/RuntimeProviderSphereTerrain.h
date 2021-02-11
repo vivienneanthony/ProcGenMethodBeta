@@ -7,6 +7,7 @@
 // RuntimeMeshComponent Headers
 #include "RuntimeMeshProvider.h"
 #include "RuntimeMeshModifier.h"
+#include "RuntimeMeshComponentPlugin.h"
 
 #include "Modifiers/RuntimeMeshModifierNormals.h"
 
@@ -41,20 +42,11 @@ public:
 	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
 	void SetSphereRadius(float InSphereRadius);
 
-	// Set Parameters
-	virtual void SetMarchingCubeParameters(FMeshMarchingCubeParameters inParameters);
-
 	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
 	void SetSphereMaterial(UMaterialInterface *InSphereMaterial);
 
-	UPROPERTY()
-	UMeshMarchingCube *ptrMarchingCube = nullptr;
-
-	// Override standard create section
-	virtual void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties) override;
-
-	///UFUNCTION(Category = "RuntimeMesh|Providers|Collision", BlueprintCallable)
-	void SetRenderableSectionAffectsCollision(int32 SectionId, bool bCollisionEnabled);
+	// Set Parameters
+	virtual void SetMarchingCubeParameters(FMeshMarchingCubeParameters inParameters);
 
 protected:
 	// Initialize
@@ -66,31 +58,44 @@ protected:
 	// Is safe
 	virtual bool IsThreadSafe() override;
 
-	// Get section Mesh
-	virtual bool GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData) override;
-
-	// Marching Cube Parameters
-	FMeshMarchingCubeParameters configMeshMarchingCubeParameters;
-
 	// Collision - Has to tell Unreal theres a collision
 	bool HasCollisionMesh() override;
 
 	// Get collision mesh
 	bool GetCollisionMesh(FRuntimeMeshCollisionData &CollisionData) override;
 
+	// Override standard create section
+	virtual void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties) override;
+
+	// Get section Mesh
+	virtual bool GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData) override;
+
+	bool GenerateSectionData(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &SectionData);
+
+	// Not used
+	void SetRenderableSectionAffectsCollision(int32 SectionId, bool bCollisionEnabled);
+
 	// Get collision settings
 	FRuntimeMeshCollisionSettings GetCollisionSettings();
 
+	// Marching Cube Parameters
+	FMeshMarchingCubeParameters configMeshMarchingCubeParameters;
+
+	// Renderable Collision Data
 	TMap<int32, FRuntimeMeshRenderableCollisionData> RenderableCollisionData;
 
+	// Sections Affecting Collision
 	TSet<int32> SectionsAffectingCollision;
 
+	// Collision Mesh
 	FRuntimeMeshCollisionData CollisionMesh;
+
+	// Null pointer marching cube
+	UMeshMarchingCube *ptrMarchingCube = nullptr;
 
 private:
 	// mutable critical
 	mutable FCriticalSection PropertySyncRoot;
-
 	mutable FCriticalSection MeshSyncRoot;
 	mutable FCriticalSection CollisionSyncRoot;
 	mutable FCriticalSection SyncRoot;
@@ -101,8 +106,8 @@ private:
 	// SectionDataEntry
 	using FSectionDataMapEntry = TTuple<FRuntimeMeshSectionProperties, FRuntimeMeshRenderableMeshData, FBoxSphereBounds>;
 
-	// Section Map Data
-	TMap<int32, TMap<int32, FSectionDataMapEntry>> SectionDataMap;
+	// Section Map Data - Map Section and Data
+	TMap<int32, FSectionDataMapEntry> SectionDataMap;
 
 	// Array
 	TArray<URuntimeMeshModifier *> CurrentMeshModifiers;
@@ -118,19 +123,4 @@ private:
 
 	// Material
 	UMaterialInterface *AutoTerrainMaterial;
-
-	// Create Section
-	void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties, FRuntimeMeshRenderableMeshData &&SectionData, bool bCreateCollision = true)
-	{
-		// This creates a section
-		CreateSection(LODIndex, SectionId, SectionProperties);
-
-		// not sure
-		//UpdateSectionInternal(LODIndex, SectionId, MoveTemp(SectionData), GetBoundsFromMeshData(SectionData));
-
-		//UpdateSectionAffectsCollision(LODIndex, SectionId, bCreateCollision);
-	}
-
-	// Update Section Internal
-	void UpdateSectionInternal(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &&SectionData, FBoxSphereBounds KnownBounds);
 };

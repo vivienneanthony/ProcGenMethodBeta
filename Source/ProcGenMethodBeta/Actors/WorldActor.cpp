@@ -11,7 +11,8 @@
 #include <cstdlib>
 
 // Sets default values
-AWorldActor::AWorldActor()
+AWorldActor::AWorldActor(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -19,11 +20,12 @@ AWorldActor::AWorldActor()
 	// Make sure object exist
 	if (component_RMC == nullptr)
 	{
-		component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));
-
-		RootComponent = component_RMC;
+		//component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));		
+		component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent0"));
 
 		component_RMC->Mobility = EComponentMobility::Static;
+
+		RootComponent = component_RMC;
 	}
 
 	if (component_MC == nullptr)
