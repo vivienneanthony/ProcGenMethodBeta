@@ -23,7 +23,7 @@ void URuntimeProviderSphereTerrain::Initialize()
 {
 
     // Core
-    ptrMarchingCube = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
+    /* ptrMarchingCube = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
 
     // Write Long if marching cube can't be created
     if (!ptrMarchingCube)
@@ -40,7 +40,7 @@ void URuntimeProviderSphereTerrain::Initialize()
     UE_LOG(LogTemp, Warning, TEXT("Initialize - Initialize Noise Grid Data"));
 
     // Initialize
-    ptrMarchingCube->InitializeNoiseGridData();
+    ptrMarchingCube->InitializeNoiseGridData();*/
 
     // Not adding a new object
     FWriteScopeLock Lock(ModifierRWLock);
@@ -138,8 +138,20 @@ bool URuntimeProviderSphereTerrain ::GetSectionMeshForLOD(int32 LODIndex, int32 
 bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &SectionData)
 {
 
+    // Null pointer marching cube
+    UMeshMarchingCube *sectionMarchingCube = nullptr;
+
+    // create a new section
+    sectionMarchingCube = NewObject<UMeshMarchingCube>(this);
+
+    // set parameters
+    sectionMarchingCube->SetParameters(configMeshMarchingCubeParameters);
+
+    // set prime
+    sectionMarchingCube->InitializeNoiseGridData();
+
     // Write Long if marching cube can't be created
-    if (!ptrMarchingCube)
+    if (!sectionMarchingCube)
     {
         UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh For LOD FaiL - Could not create Marching Cube Object"));
 
@@ -160,7 +172,7 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
     // create polygons
     UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Generating for bound  Min %s  Max %s"), *polygonizationBoundRegionMin.ToString(), *polygonizationBoundRegionMax.ToString());
 
-    ptrMarchingCube->PolygonizationV2(polygonizationBoundRegionMin, polygonizationBoundRegionMax, positions, triangles);
+    sectionMarchingCube->PolygonizationV2(polygonizationBoundRegionMin, polygonizationBoundRegionMax, positions, triangles);
 
     // Write Log
     UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Copy to SectionData (Could be a memory move)"));

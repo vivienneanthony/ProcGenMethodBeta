@@ -440,7 +440,7 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
     Vect3 Results = Vect3(0.0f, 0.0f, 0.0f);
 
     // should match size
-    FVector scale = (inBoundaryRegionMax - inBoundaryRegionMin) / (float)cubeSize;
+    FVector scale = (FVector(inBoundaryRegionMax - inBoundaryRegionMin).GetAbs()) / (float)cubeSize;
 
     // check noise height
     float surfaceHeight = 0;
@@ -450,9 +450,9 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
     for (int cubepoint = 0; cubepoint < CellPointsLength; cubepoint++)
     {
         // cakculate pixel location - Could be one function - Just used this assuming regions would be different sizes
-        vPosition.X = ((float)x + (float)VPoints[cubepoint].X) * (float)scale.X;
-        vPosition.Y = ((float)y + (float)VPoints[cubepoint].Y) * (float)scale.Y;
-        vPosition.Z = ((float)z + (float)VPoints[cubepoint].Z) * (float)scale.Z;
+        vPosition.X = (float)(x + VPoints[cubepoint].X) * scale.X;
+        vPosition.Y = (float)(y + VPoints[cubepoint].Y) * scale.Y;
+        vPosition.Z = (float)(z + VPoints[cubepoint].Z) * scale.Z;
 
         // add VPosition
         vPosition = vPosition + inBoundaryRegionMin;
@@ -464,9 +464,7 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         distancefromcenter = FGenericPlatformMath::Abs(distanceSquare(vPosition, FVector(0.0f, 0.0f, 0.0f)));
 
         // convert point to space - Made to a Vect3 which has special functions for Vectors - Allowing this to work
-        newPosition.x = vPosition.X;
-        newPosition.y = vPosition.Y;
-        newPosition.z = vPosition.Z;
+        newPosition = Vect3(vPosition.X, vPosition.Y, vPosition.Z);
 
         // Calculate xyz to a cube space
         Results = newPosition.cubizePoint();
@@ -475,7 +473,7 @@ void UMeshMarchingCube::CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, ui
         Results.ProjectCubizeToCubeXYZ();
 
         // Create terrain increase height - can be a valuable
-        surfaceHeight = FMath::Clamp((float)fastNoiseWrapperTerrain->GetNoise3D(Results.x, Results.y, Results.z), 0.0f, 1.0f) * 2000.0;
+        surfaceHeight = FMath::Clamp((float)fastNoiseWrapperTerrain->GetNoise3D(Results.x, Results.y, Results.z), 0.0f, 1.0f) * 1000.0;
 
         // Use terrain noise to create meight height
         calculatedSurfaceLevel = surfaceHeight + coreLevel;

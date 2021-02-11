@@ -91,7 +91,7 @@ protected:
 	FRuntimeMeshCollisionData CollisionMesh;
 
 	// Null pointer marching cube
-	UMeshMarchingCube *ptrMarchingCube = nullptr;
+	//UMeshMarchingCube *ptrMarchingCube = nullptr;
 
 private:
 	// mutable critical
