@@ -7,44 +7,25 @@
 
 // Using LODDOF FOR DETAIL LEVEL PER NODE
 
-#define MAXOCTREENODEDEPTH 3
+#define MAXOCTREENODEDEPTH 4
 
 URuntimeMeshProviderSphere::URuntimeMeshProviderSphere()
     : MaxLOD(0), SphereRadius(20000.0f)
 {
     // Set MaxLod to 0
-    //MaxLOD = GetMaxNumberOfLODs() - 1;
-
-    //MaxLOD = 10;
+    MaxLOD = 0;
 }
 
 // Initialize
 void URuntimeProviderSphereTerrain::Initialize()
 {
 
-    // Core
-    /* ptrMarchingCube = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
-
-    // Write Long if marching cube can't be created
-    if (!ptrMarchingCube)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Initialize - Generate Marching Cube"));
-
-        return;
-    }
-
-    UE_LOG(LogTemp, Warning, TEXT("Initialize - Set Parameters"));
-    ptrMarchingCube->SetParameters(configMeshMarchingCubeParameters);
-
-    // Write Log
-    UE_LOG(LogTemp, Warning, TEXT("Initialize - Initialize Noise Grid Data"));
-
-    // Initialize
-    ptrMarchingCube->InitializeNoiseGridData();*/
+    // Create subobject add to property to prevent deletion on creation
+    URuntimeMeshModifierNormals *modifierNormals = NewObject<URuntimeMeshModifierNormals>(this, "RuntimeMeshModifierNormals Calc");
 
     // Not adding a new object
     FWriteScopeLock Lock(ModifierRWLock);
-    CurrentMeshModifiers.Add(NewObject<URuntimeMeshModifierNormals>(this, "RuntimeMeshModifierNormals"));
+    CurrentMeshModifiers.Add(modifierNormals);
 
     // Create Runtime Mesh LOD Properties
     FRuntimeMeshLODProperties LODProperties;
@@ -66,12 +47,18 @@ void URuntimeProviderSphereTerrain::Initialize()
     Properties.bWants32BitIndices = true;
     Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
 
-    // Generate Octree
-    rootOctreeNode.BoundRegion.Min = Vect3(-20000.0f, -20000.0f, -20000.0f);
-    rootOctreeNode.BoundRegion.Max = Vect3(20000.0f, 20000.0f, 20000.0f);
-
     // Generate Tree Base On Max Lod
+    rootOctreeNode.ClearNodesAll();
+
+    // Generate Octree
+    rootOctreeNode.BoundRegion.Min = Vect3(-SphereRadius, -SphereRadius, -SphereRadius);
+    rootOctreeNode.BoundRegion.Max = Vect3(SphereRadius, SphereRadius, SphereRadius);
+
+    // Clear tree
     rootOctreeNode.BuildTree(MAXOCTREENODEDEPTH);
+
+    // Empty
+    OctreeNodeSections.Empty();
 
     // Return list of nodes
     rootOctreeNode.GetAllNodesAtDepth(MAXOCTREENODEDEPTH, OctreeNodeSections);
@@ -85,13 +72,14 @@ void URuntimeProviderSphereTerrain::Initialize()
         // CreateDefault Section
         this->CreateSection(0, section, Properties);
     }
-
-    // Mark Collision Dirty
-    MarkCollisionDirty();
 }
 
-bool URuntimeProviderSphereTerrain ::GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData)
+bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData)
 {
+
+    // check lodindex is 0
+    check(LODIndex == 0);
+
     // Get Section Data here
     FSectionDataMapEntry *Section = SectionDataMap.Find(SectionId);
 
@@ -144,6 +132,9 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
     // create a new section
     sectionMarchingCube = NewObject<UMeshMarchingCube>(this);
 
+    // add to pull prevent deletion
+    MarchingCubePool.Add(sectionMarchingCube);
+
     // set parameters
     sectionMarchingCube->SetParameters(configMeshMarchingCubeParameters);
 
@@ -172,6 +163,7 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
     // create polygons
     UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Generating for bound  Min %s  Max %s"), *polygonizationBoundRegionMin.ToString(), *polygonizationBoundRegionMax.ToString());
 
+    // Version 2 of polygonization
     sectionMarchingCube->PolygonizationV2(polygonizationBoundRegionMin, polygonizationBoundRegionMax, positions, triangles);
 
     // Write Log
@@ -186,13 +178,9 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
         SectionData.TexCoords.Add(InTexCoord);
     };
 
+    // Blank fvector and TextCoordinate
     FVector Tangent;
     FVector2D TextCoord;
-
-    //if (positions.Num() < 3)
-    //{
-    //return false;
-    //}
 
     for (uint32 i = 0; i < positions.Num(); i++)
     {
@@ -208,6 +196,9 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
             bTriangleGenerated = true;
         }
     }
+
+    // delete from pool
+    MarchingCubePool.Remove(sectionMarchingCube);
 
     if (bTriangleGenerated)
     {
@@ -388,9 +379,7 @@ void URuntimeProviderSphereTerrain::CreateSection(int32 LODIndex, int32 SectionI
     // Create a section
     {
         FScopeLock Lock(&MeshSyncRoot);
-        SectionDataMap.FindOrAdd(SectionId) = MakeTuple(SectionProperties, FRuntimeMeshRenderableMeshData(), FBoxSphereBounds(FVector::ZeroVector, FVector::ZeroVector, 0));
-
-        generatedSection = true;
+        SectionDataMap.FindOrAdd(SectionId) = MakeTuple(SectionProperties, FRuntimeMeshRenderableMeshData(), FBoxSphereBounds(FVector(OctreeNodeSections[SectionId]->BoundRegion.Min.x, OctreeNodeSections[SectionId]->BoundRegion.Min.y, OctreeNodeSections[SectionId]->BoundRegion.Min.z), FVector(OctreeNodeSections[SectionId]->BoundRegion.Max.x, OctreeNodeSections[SectionId]->BoundRegion.Max.y, OctreeNodeSections[SectionId]->BoundRegion.Max.z), 0));
 
         // Call super create section
         Super::CreateSection(LODIndex, SectionId, SectionProperties);

@@ -78,6 +78,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
 	UMaterial *Material;
 
+	// Runtime work the above fails
+	UPROPERTY()
+	URuntimeMeshComponent *component_RMC;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -93,13 +97,7 @@ protected:
 
 	// Sphere Terrain
 	void TestProviderSphereTerrain();
-
-	// Mesh Marching Cube
-	UMeshMarchingCube *component_MC = nullptr;
-
-	// Runtime work the above fails
-	URuntimeMeshComponent *component_RMC = nullptr;
-
+	
 	// Scene Component
 	USceneComponent * SceneComponent = nullptr;
 	

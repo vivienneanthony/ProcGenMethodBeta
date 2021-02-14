@@ -72,4 +72,5 @@ public:
 
     void GetAllNodesAtDepth(unsigned int indepth, TArray<OctreeNode *> &index);
 
+    bool HasChild();
 };

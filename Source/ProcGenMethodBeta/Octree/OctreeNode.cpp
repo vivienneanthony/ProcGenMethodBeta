@@ -314,7 +314,7 @@ void OctreeNode::GetAllNodesAtDepth(unsigned int indepth, TArray<OctreeNode *> &
     if (depth == indepth)
     {
         index.Add(this);
-        
+
         return;
     }
 
@@ -328,4 +328,43 @@ void OctreeNode::GetAllNodesAtDepth(unsigned int indepth, TArray<OctreeNode *> &
     }
 
     return;
+}
+
+// Clear all nodes
+void OctreeNode::ClearNodesAll()
+{
+    // loop through each child
+    for (unsigned i = 0; i < OCTANTS; i++)
+    {
+        if (Node[i])
+        {
+            if (Node[i]->HasChild())
+            {
+                Node[i]->ClearNodesAll();
+            }
+
+            // felete node
+            delete Node[i];
+
+            // set nullptr;
+            Node[i] = nullptr;
+        }
+    }
+}
+
+// Check if any children exist before allowing delete
+bool OctreeNode::HasChild()
+{
+    bool returnflag = false;
+
+    // loop through each child
+    for (unsigned i = 0; i < OCTANTS; i++)
+    {
+        if (Node[i])
+        {
+            returnflag = true;
+        }
+    }
+
+    return returnflag;
 }

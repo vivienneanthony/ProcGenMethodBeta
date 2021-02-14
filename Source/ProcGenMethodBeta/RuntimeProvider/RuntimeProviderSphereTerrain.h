@@ -6,21 +6,23 @@
 
 // RuntimeMeshComponent Headers
 #include "RuntimeMeshProvider.h"
-#include "RuntimeMeshModifier.h"
 #include "RuntimeMeshComponentPlugin.h"
 
+#include "RuntimeMeshModifier.h"
 #include "Modifiers/RuntimeMeshModifierNormals.h"
 
 // Add Marching cube
 #include "../MarchingCube/MeshMarchingCube.h"
 #include "../Structures/MeshMarchingCubeParameters.h"
 
+// Custom clas
 #include "../Octree/OctreeNode.h"
 
 // Generated file
 #include "RuntimeProviderSphereTerrain.generated.h"
 
 class URuntimeMeshModifier;
+class URuntimeMeshModifierNormals;
 
 // Class
 UCLASS()
@@ -31,22 +33,53 @@ class PROCGENMETHODBETA_API URuntimeProviderSphereTerrain : public URuntimeMeshP
 
 public:
 	UPROPERTY()
-	int32 MaxLOD;
-
-	UPROPERTY(Category = "RuntimeMesh|Providers|Sphere", VisibleAnywhere, BlueprintGetter = GetSphereRadius, BlueprintSetter = SetSphereRadius)
 	float SphereRadius;
 
-	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
+	UFUNCTION()
 	float GetSphereRadius() const;
 
-	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
+	UFUNCTION()
 	void SetSphereRadius(float InSphereRadius);
 
-	UFUNCTION(Category = "RuntimeMesh|Providers|Sphere", BlueprintCallable)
+	UFUNCTION()
 	void SetSphereMaterial(UMaterialInterface *InSphereMaterial);
 
-	// Set Parameters
+	UFUNCTION()
 	virtual void SetMarchingCubeParameters(FMeshMarchingCubeParameters inParameters);
+
+	UPROPERTY()
+	int32 MaxLOD;
+
+	// Marching Cube Parameters
+	UPROPERTY()
+	FMeshMarchingCubeParameters configMeshMarchingCubeParameters;
+
+	UPROPERTY()
+	TArray<UMeshMarchingCube *> MarchingCubePool;
+
+	// Renderable Collision Data
+	UPROPERTY()
+	TMap<int32, FRuntimeMeshRenderableCollisionData> RenderableCollisionData;
+
+	// Sections Affecting Collision
+	UPROPERTY()
+	TSet<int32> SectionsAffectingCollision;
+
+	// Collision Mesh
+	UPROPERTY()
+	FRuntimeMeshCollisionData CollisionMesh;
+
+	// Sections For Collision
+	UPROPERTY()
+	TSet<int32> SectionsForMeshCollision;
+
+	// Material
+	UPROPERTY()
+	UMaterialInterface *AutoTerrainMaterial;
+
+	// Array
+	UPROPERTY()
+	TArray<URuntimeMeshModifier *> CurrentMeshModifiers;
 
 protected:
 	// Initialize
@@ -59,10 +92,10 @@ protected:
 	virtual bool IsThreadSafe() override;
 
 	// Collision - Has to tell Unreal theres a collision
-	bool HasCollisionMesh() override;
+	virtual bool HasCollisionMesh() override;
 
 	// Get collision mesh
-	bool GetCollisionMesh(FRuntimeMeshCollisionData &CollisionData) override;
+	virtual bool GetCollisionMesh(FRuntimeMeshCollisionData &CollisionData) override;
 
 	// Override standard create section
 	virtual void CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties) override;
@@ -70,28 +103,25 @@ protected:
 	// Get section Mesh
 	virtual bool GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData) override;
 
-	bool GenerateSectionData(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &SectionData);
+	virtual bool GenerateSectionData(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &SectionData);
 
 	// Not used
-	void SetRenderableSectionAffectsCollision(int32 SectionId, bool bCollisionEnabled);
+	virtual void SetRenderableSectionAffectsCollision(int32 SectionId, bool bCollisionEnabled);
 
 	// Get collision settings
-	FRuntimeMeshCollisionSettings GetCollisionSettings();
+	virtual FRuntimeMeshCollisionSettings GetCollisionSettings();
 
-	// Marching Cube Parameters
-	FMeshMarchingCubeParameters configMeshMarchingCubeParameters;
+	// SectionDataEntry
+	using FSectionDataMapEntry = TTuple<FRuntimeMeshSectionProperties, FRuntimeMeshRenderableMeshData, FBoxSphereBounds>;
 
-	// Renderable Collision Data
-	TMap<int32, FRuntimeMeshRenderableCollisionData> RenderableCollisionData;
+	// Section Map Data - Map Section and Data
+	TMap<int32, FSectionDataMapEntry> SectionDataMap;
 
-	// Sections Affecting Collision
-	TSet<int32> SectionsAffectingCollision;
+	// Root Octree
+	OctreeNode rootOctreeNode;
 
-	// Collision Mesh
-	FRuntimeMeshCollisionData CollisionMesh;
-
-	// Null pointer marching cube
-	//UMeshMarchingCube *ptrMarchingCube = nullptr;
+	// Octree Node Sections
+	TArray<OctreeNode *> OctreeNodeSections;
 
 private:
 	// mutable critical
@@ -102,25 +132,4 @@ private:
 
 	// mutable locks
 	mutable FRWLock ModifierRWLock;
-
-	// SectionDataEntry
-	using FSectionDataMapEntry = TTuple<FRuntimeMeshSectionProperties, FRuntimeMeshRenderableMeshData, FBoxSphereBounds>;
-
-	// Section Map Data - Map Section and Data
-	TMap<int32, FSectionDataMapEntry> SectionDataMap;
-
-	// Array
-	TArray<URuntimeMeshModifier *> CurrentMeshModifiers;
-
-	// Sections For Collision
-	TSet<int32> SectionsForMeshCollision;
-
-	// Root Octree
-	OctreeNode rootOctreeNode;
-
-	// Octree Node Sections
-	TArray<OctreeNode *> OctreeNodeSections;
-
-	// Material
-	UMaterialInterface *AutoTerrainMaterial;
 };

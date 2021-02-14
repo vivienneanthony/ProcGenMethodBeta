@@ -11,98 +11,41 @@
 #include <cstdlib>
 
 // Sets default values
-AWorldActor::AWorldActor(const FObjectInitializer& ObjectInitializer)
+AWorldActor::AWorldActor(const FObjectInitializer &ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Make sure object exist
-	if (component_RMC == nullptr)
-	{
-		//component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));		
-		component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent0"));
+	//component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));
+	component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent0"));
 
-		component_RMC->Mobility = EComponentMobility::Static;
+	// Set component static
+	component_RMC->Mobility = EComponentMobility::Static;
 
-		RootComponent = component_RMC;
-	}
-
-	if (component_MC == nullptr)
-	{
-		component_MC = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
-	}
-
-	// Create a root scene component
-	//SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
-
-	//RootComponent = SceneComponent;
-
-	// Set mobility to static
-	//if (RootComponent == nullptr)
-	//{
-	// Write Log
-	//UE_LOG(LogTemp, Warning, "Scene Component Not Created"));
-	//}
+	// make root component
+	RootComponent = component_RMC;
 }
 
 // Construction
 void AWorldActor::OnConstruction(const FTransform &Transform)
 {
 	Super::OnConstruction(Transform);
+
+	// Test static
+	TestProviderSphereTerrain();
 }
 
 // Called when the game starts or when spawned
 void AWorldActor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	/* Make sure object exist
-	if (component_RMC == nullptr)
-	{
-		component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));
-
-		RootComponent = compo
-	}
-
-	if (component_MC == nullptr)
-	{
-		component_MC = NewObject<UMeshMarchingCube>(this, TEXT("MeshMarchingCube"));
-	}
-	*/
-
-	// Test static
-	TestProviderSphereTerrain();
 }
 
 // Called every frame
 void AWorldActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-// Copy Defaults To Marching Cube
-void AWorldActor::SetMarchingCubeNoiseDefaults()
-{
-	// copy default
-	component_MC->noiseType = in_noiseType;
-	component_MC->fractalType = in_fractalType;
-	component_MC->noiseFrequency = in_noiseFrequency;
-	component_MC->noiseOctaves = in_noiseOctaves;
-	component_MC->noiseCutoff = in_noiseCutoff;
-
-	// copy default
-	component_MC->noiseTypeTerrain = in_noiseTypeTerrain;
-	component_MC->fractalTypeTerrain = in_fractalTypeTerrain;
-	component_MC->noiseFrequencyTerrain = in_noiseFrequencyTerrain;
-	component_MC->noiseOctavesTerrain = in_noiseOctavesTerrain;
-	component_MC->noiseCutoffTerrain = in_noiseCutoffTerrain;
-
-	// other defaults
-	component_MC->cubeCellSize = in_cubeCellSize;
-	component_MC->cubeSize = in_cubeSize;
-	component_MC->surfaceLevel = in_surfaceLevel;
-	component_MC->coreLevel = in_coreLevel;
 }
 
 // Test
@@ -115,23 +58,17 @@ void AWorldActor::TestSphereProvider()
 	if (SphereProvider)
 	{
 
-		RootComponent = component_RMC;
+		// Set Sphere Radius Default
+		SphereProvider->SetSphereRadius(20000.0f);
 
-		// If Runtimemesh provider is created
-		if (component_RMC)
+		// If material set material if it exist
+		if (Material)
 		{
-			// Set Sphere Radius Default
-			SphereProvider->SetSphereRadius(20000.0f);
-
-			// If material set material if it exist
-			if (Material)
-			{
-				SphereProvider->SetSphereMaterial(Material);
-			}
-
-			// Initialize
-			component_RMC->Initialize(SphereProvider);
+			SphereProvider->SetSphereMaterial(Material);
 		}
+
+		// Initialize
+		component_RMC->Initialize(SphereProvider);
 	}
 }
 
@@ -167,6 +104,9 @@ void AWorldActor::TestProviderSphereTerrain()
 			// Set Marching Cube Parameters
 			SphereTerrainProvider->SetMarchingCubeParameters(outParameters);
 
+			// Set Radius
+			SphereTerrainProvider->SetSphereRadius(20000.0f);
+
 			// Set Material
 			SphereTerrainProvider->SetSphereMaterial(Material);
 
@@ -180,32 +120,32 @@ void AWorldActor::TestProviderSphereTerrain()
 void AWorldActor::TestStaticProvider()
 {
 	// Fail safe if no mesh data is generated
-	if (component_MC->GetVerticesData().Num() <= 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No Mesh Data Generated"));
-		return;
-	}
+	//if (component_MC->GetVerticesData().Num() <= 0)
+	////{
+	//	UE_LOG(LogTemp, Warning, TEXT("No Mesh Data Generated"));
+	//	return;
+	//}
 
-	URuntimeMeshProviderStatic *StaticProvider = NewObject<URuntimeMeshProviderStatic>(this, TEXT("RuntimeMeshProvider-Static"));
+	//URuntimeMeshProviderStatic *StaticProvider = NewObject<URuntimeMeshProviderStatic>(this, TEXT("RuntimeMeshProvider-Static"));
 
-	if (StaticProvider)
-	{
-		if (component_RMC)
-		{
-			// test initialize
-			component_RMC->Initialize(StaticProvider);
+	//if (StaticProvider)
+	//{
+	//	if (component_RMC)
+	//	{
+	// test initialize
+	//component_RMC->Initialize(StaticProvider);
 
-			StaticProvider->SetupMaterialSlot(0, TEXT("TriMat"), Material);
+	//StaticProvider->SetupMaterialSlot(0, TEXT("TriMat"), Material);
 
-			// This creates 3 vertex colors
-			TArray<FColor> Colors{FColor::Blue, FColor::Red, FColor::Green};
+	// This creates 3 vertex colors
+	//TArray<FColor> Colors{FColor::Blue, FColor::Red, FColor::Green};
 
-			// Blank info
-			TArray<FVector> EmptyNormals;
-			TArray<FVector2D> EmptyTexCoords;
-			TArray<FRuntimeMeshTangent> EmptyTangents;
+	// Blank info
+	//TArray<FVector> EmptyNormals;
+	//TArray<FVector2D> EmptyTexCoords;
+	//TArray<FRuntimeMeshTangent> EmptyTangents;
 
-			StaticProvider->CreateSectionFromComponents(0, 0, 0, component_MC->GetVerticesData(), component_MC->GetTrianglesData(), EmptyNormals, EmptyTexCoords, Colors, EmptyTangents, ERuntimeMeshUpdateFrequency::Infrequent, true);
-		}
-	}
+	//StaticProvider->CreateSectionFromComponents(0, 0, 0, component_MC->GetVerticesData(), component_MC->GetTrianglesData(), EmptyNormals, EmptyTexCoords, Colors, EmptyTangents, ERuntimeMeshUpdateFrequency::Infrequent, true);
+	//	}
+	//}
 }

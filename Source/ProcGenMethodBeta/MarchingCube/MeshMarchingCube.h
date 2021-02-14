@@ -37,7 +37,7 @@ public:
 
 	// Polygonization
 	UFUNCTION(BlueprintCallable)
-	void PolygonizationV2(FVector inBoundaryRegionMin, FVector inBoundaryRegionMax, TArray<FVector> & verticesPolygonizationData, TArray<int32> & trianglesPolygonizationData);
+	void PolygonizationV2(FVector inBoundaryRegionMin, FVector inBoundaryRegionMax, TArray<FVector> &verticesPolygonizationData, TArray<int32> &trianglesPolygonizationData);
 
 	// Set Parameters
 	void SetParameters(FMeshMarchingCubeParameters inParameters);
@@ -107,27 +107,38 @@ public:
 	UPROPERTY();
 	UFastNoiseWrapper *fastNoiseWrapper = nullptr;
 
-
 	UPROPERTY();
 	UFastNoiseWrapper *fastNoiseWrapperTerrain = nullptr;
 
-
 	// Bound Region
+	UPROPERTY();
 	FVector BoundRegionMin;
+
+	UPROPERTY();
 	FVector BoundRegionMax;
 
-protected:
 	// Vertice Data
+	UPROPERTY()
 	TArray<FVector> verticesData;
+
+	UPROPERTY()
 	TArray<int32> trianglesData;
+
+	UPROPERTY()
 	TArray<FVector> verticesNormalData;
 
 	// required for runtimemesh
+	UPROPERTY()
 	TArray<FVector> tangentXData;
+
+	UPROPERTY()
 	TArray<FVector> tangentZData;
+
+	UPROPERTY()
 	TArray<FVector2D> colorData;
 
-	// Do Intrepreation
+protected:
+		// Do Intrepreation
 	FVector VertexInterp(float isolevel, FVector p1, FVector p2, double valp1, double valp2);
 
 	// Math Fuction to give distance square

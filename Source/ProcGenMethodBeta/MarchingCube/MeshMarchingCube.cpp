@@ -15,17 +15,10 @@
 // Constructor
 UMeshMarchingCube::UMeshMarchingCube()
 {
-    // Create cavermfast noise wrapper
-    if (fastNoiseWrapper == nullptr)
-    {
-        fastNoiseWrapper = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapper"));
-    }
+    // Create subobjects
+    fastNoiseWrapper = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapper"));
 
-    // Create terrain fast noise wrapper
-    if (fastNoiseWrapperTerrain == nullptr)
-    {
-        fastNoiseWrapperTerrain = NewObject<UFastNoiseWrapper>(this, TEXT("FastNoiseWrapperTerrain"));
-    }
+    fastNoiseWrapperTerrain = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapperTerrain"));
 }
 
 void UMeshMarchingCube::SetParameters(FMeshMarchingCubeParameters inParameters)
@@ -47,7 +40,7 @@ void UMeshMarchingCube::SetParameters(FMeshMarchingCubeParameters inParameters)
     coreLevel = inParameters.coreLevel;
 }
 
-// Initializatio
+// Initialization
 void UMeshMarchingCube::InitializeNoiseGridData()
 {
 
@@ -261,10 +254,10 @@ void UMeshMarchingCube::CalculateCellData(MarchingCubeCell &cell, uint32 x, uint
             noiseValue = fastNoiseWrapper->GetNoise3D(vPosition.X, vPosition.Y, vPosition.Z);
 
             // make sure distance above core level
-            if ((distancefromcenter > coreLevel - 600) && (distancefromcenter < (coreLevel + 300)))
+            if ((distancefromcenter > (coreLevel - 600)) && (distancefromcenter < (coreLevel + 300)))
             {
                 // cut off based on noise
-                if (noiseValue > noiseCutoff)
+                /*if (noiseValue > noiseCutoff)
                 {
                     noiseValue = 1.0f;
                 }
@@ -272,7 +265,9 @@ void UMeshMarchingCube::CalculateCellData(MarchingCubeCell &cell, uint32 x, uint
                 {
                     // use cutoff
                     noiseValue = 0.0f;
-                }
+                }*/
+                // Getnoisewarapper
+                noiseValue = FMath::Clamp((float)fastNoiseWrapper->GetNoise3D(vPosition.X, vPosition.Y, vPosition.Z), 0.0f, 1.0f);
             }
             else
             {
@@ -349,7 +344,11 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
                 ConfigurationValue = (int)cell.GetConfiguration();
 
                 ///*vertlist.Empty();
-                memset(vertlist, 0, sizeof(vertlist));
+                //memset(vertlist, 0, sizeof(vertlist));
+                for (unsigned i = 0; i < 12; i++)
+                {
+                    vertlist[i] = FVector(0.0f, 0.0f, 0.0f);
+                }
 
                 if (edgeTable[ConfigurationValue] == 0)
                     continue;
