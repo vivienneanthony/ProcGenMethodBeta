@@ -81,6 +81,7 @@ public:
 	UPROPERTY()
 	TArray<URuntimeMeshModifier *> CurrentMeshModifiers;
 
+
 protected:
 	// Initialize
 	virtual void Initialize() override;
@@ -103,6 +104,7 @@ protected:
 	// Get section Mesh
 	virtual bool GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData) override;
 
+	// Generate section data
 	virtual bool GenerateSectionData(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &SectionData);
 
 	// Not used
@@ -114,13 +116,13 @@ protected:
 	// SectionDataEntry
 	using FSectionDataMapEntry = TTuple<FRuntimeMeshSectionProperties, FRuntimeMeshRenderableMeshData, FBoxSphereBounds>;
 
-	// Section Map Data - Map Section and Data
+	// Section Map Data - Map Section and Data		
 	TMap<int32, FSectionDataMapEntry> SectionDataMap;
 
-	// Root Octree
+	// Root Octree	
 	OctreeNode rootOctreeNode;
 
-	// Octree Node Sections
+	// Octree Node Sections	
 	TArray<OctreeNode *> OctreeNodeSections;
 
 private:

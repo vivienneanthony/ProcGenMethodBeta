@@ -22,11 +22,11 @@ void URuntimeProviderSphereTerrain::Initialize()
 
     // Create subobject add to property to prevent deletion on creation
     URuntimeMeshModifierNormals *modifierNormals = NewObject<URuntimeMeshModifierNormals>(this, "RuntimeMeshModifierNormals Calc");
-
+   
     // Not adding a new object
     FWriteScopeLock Lock(ModifierRWLock);
     CurrentMeshModifiers.Add(modifierNormals);
-
+   
     // Create Runtime Mesh LOD Properties
     FRuntimeMeshLODProperties LODProperties;
 
@@ -48,7 +48,7 @@ void URuntimeProviderSphereTerrain::Initialize()
     Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
 
     // Generate Tree Base On Max Lod
-    rootOctreeNode.ClearNodesAll();
+    //rootOctreeNode.ClearNodesAll();
 
     // Generate Octree
     rootOctreeNode.BoundRegion.Min = Vect3(-SphereRadius, -SphereRadius, -SphereRadius);
@@ -130,8 +130,8 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
     UMeshMarchingCube *sectionMarchingCube = nullptr;
 
     // create a new section
-    sectionMarchingCube = NewObject<UMeshMarchingCube>(this);
-
+    sectionMarchingCube = NewObject<UMeshMarchingCube>();
+    
     // add to pull prevent deletion
     MarchingCubePool.Add(sectionMarchingCube);
 

@@ -31,16 +31,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void InitializeNoiseGridData();
 
-	// Polygonization
-	UFUNCTION(BlueprintCallable)
-	void Polygonization();
+	// Set Parameters
+	void SetParameters(FMeshMarchingCubeParameters inParameters);
 
 	// Polygonization
 	UFUNCTION(BlueprintCallable)
 	void PolygonizationV2(FVector inBoundaryRegionMin, FVector inBoundaryRegionMax, TArray<FVector> &verticesPolygonizationData, TArray<int32> &trianglesPolygonizationData);
-
-	// Set Parameters
-	void SetParameters(FMeshMarchingCubeParameters inParameters);
 
 	// Getters
 	UFUNCTION(BlueprintCallable)
@@ -119,33 +115,30 @@ public:
 
 	// Vertice Data
 	UPROPERTY()
-	TArray<FVector> verticesData;
+	TArray<FVector> verticesData;  // not used
 
 	UPROPERTY()
-	TArray<int32> trianglesData;
+	TArray<int32> trianglesData;  // not used
 
 	UPROPERTY()
-	TArray<FVector> verticesNormalData;
+	TArray<FVector> verticesNormalData;  // not used
 
 	// required for runtimemesh
 	UPROPERTY()
-	TArray<FVector> tangentXData;
+	TArray<FVector> tangentXData; // not used
 
 	UPROPERTY()
-	TArray<FVector> tangentZData;
+	TArray<FVector> tangentZData; // not used
 
 	UPROPERTY()
-	TArray<FVector2D> colorData;
+	TArray<FVector2D> colorData;  // not used
 
 protected:
 		// Do Intrepreation
 	FVector VertexInterp(float isolevel, FVector p1, FVector p2, double valp1, double valp2);
 
 	// Math Fuction to give distance square
-	float distanceSquare(FVector v1, FVector v2);
-
-	// Calculate Cell Data
-	void CalculateCellData(MarchingCubeCell &cell, uint32 x, uint32 y, uint32 z);
+	float distanceSquare(FVector v1, FVector v2);	
 
 	// Marchiing
 	void CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, uint32 y, uint32 z, FVector inBoundaryRegionMin, FVector inBoundaryRegionMax);

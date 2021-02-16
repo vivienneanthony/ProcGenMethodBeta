@@ -13,6 +13,8 @@
 
 #include "../Structures/MeshMarchingCubeParameters.h"
 
+#include "../RuntimeProvider/RuntimeProviderSphereTerrain.h"
+
 // Marching Cube
 #include "../MarchingCube/MeshMarchingCube.h"
 
@@ -81,6 +83,9 @@ public:
 	// Runtime work the above fails
 	UPROPERTY()
 	URuntimeMeshComponent *component_RMC;
+	
+	UPROPERTY()
+	URuntimeProviderSphereTerrain *SphereTerrainProvider;
 
 protected:
 	// Called when the game starts or when spawned

@@ -20,6 +20,9 @@ AWorldActor::AWorldActor(const FObjectInitializer &ObjectInitializer)
 	//component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));
 	component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent0"));
 
+// Use Runtime Mesh Terraini to produce mesh
+	SphereTerrainProvider =  CreateDefaultSubobject<URuntimeProviderSphereTerrain>(TEXT("RuntimeProviderSphereTerrain "));
+
 	// Set component static
 	component_RMC->Mobility = EComponentMobility::Static;
 
@@ -31,7 +34,7 @@ AWorldActor::AWorldActor(const FObjectInitializer &ObjectInitializer)
 void AWorldActor::OnConstruction(const FTransform &Transform)
 {
 	Super::OnConstruction(Transform);
-
+	
 	// Test static
 	TestProviderSphereTerrain();
 }
@@ -73,10 +76,7 @@ void AWorldActor::TestSphereProvider()
 }
 
 void AWorldActor::TestProviderSphereTerrain()
-{
-	// Use Runtime Mesh Terraini to produce mesh
-	URuntimeProviderSphereTerrain *SphereTerrainProvider = NewObject<URuntimeProviderSphereTerrain>(this, TEXT("RuntimeProviderSphereTerrain "));
-
+{	
 	// Sphere
 	if (SphereTerrainProvider)
 	{
