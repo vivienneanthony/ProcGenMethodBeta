@@ -1,8 +1,6 @@
 #include "OctreeNode.h"
 
-#include "../Util/Region.h"
-#include "../Util/Vect3.h"
-#include "../Util/States.hpp"
+//#include "../Util/States.hpp"
 
 // Vivienne Anthony
 // 2021
@@ -17,8 +15,6 @@ OctreeNode::OctreeNode()
 
     // set initial depth to zero
     depth = 0;
-
-    //PointList = new std::vector<PointV3>();
 }
 
 OctreeNode::OctreeNode(Vect3 inMax)
@@ -75,7 +71,7 @@ void OctreeNode::BuildTree(unsigned int indepth)
             Node[i]->CalculateBounds((Octant)(1 << i));
 
             // Activate this octant
-            States::activateIndex(&activeOctants, i);
+            //States::activateIndex(&activeOctants, i);
 
             // Build Treee
             Node[i]->BuildTree(indepth);
@@ -274,7 +270,7 @@ void OctreeNode::BuildTreeFromData()
                         Node[i]->CalculateBounds((Octant)(1 << i));
 
                         // Activate this octant
-                        States::activateIndex(&activeOctants, i);
+                        //States::activateIndex(&activeOctants, i);
 
                         // Add to quee
                         Node[i]->AddQueue(inVect);
@@ -367,4 +363,30 @@ bool OctreeNode::HasChild()
     }
 
     return returnflag;
+}
+
+
+// Check if any children exist before allowing delete
+bool OctreeNode::VectorInNode(Vect3 point, float boundradius, float tolerance)
+{
+    if(tolerance<1.0f)
+    {
+        tolerance = 1.0f;
+    }
+
+    // Create a boundary area
+    Vect3 pointMin = Vect3(point.x-(boundradius*tolerance), point.y-(boundradius*tolerance), point.z-(boundradius*tolerance));
+    Vect3 pointMax = Vect3(point.x+(boundradius*tolerance), point.y+(boundradius*tolerance), point.z+(boundradius*tolerance));
+
+    // get center point
+    Vect3 BoundCenter = BoundRegion.CalculateCenter();
+
+    float length = std::sqrt(((BoundCenter.x-point.x)*(BoundCenter.x-point.x))+
+                   ((BoundCenter.y-point.y)*(BoundCenter.y-point.y))+
+                   ((BoundCenter.z-point.z)*(BoundCenter.z-point.z)));
+
+    if(length<boundradius)    
+        return true;
+
+    return false;
 }

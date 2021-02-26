@@ -41,9 +41,6 @@ public:
     float noiseCutoffTerrain;
 
     UPROPERTY(EditAnywhere, Category = "Noise Settings")
-    int32 cubeCellSize;
-
-    UPROPERTY(EditAnywhere, Category = "Noise Settings")
     int32 cubeSize;
 
     UPROPERTY(EditAnywhere, Category = "Levels")

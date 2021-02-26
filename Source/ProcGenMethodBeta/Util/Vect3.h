@@ -1,5 +1,4 @@
-#ifndef VECT3_H
-#define VECT3_H
+#pragma once
 
 // Vivienne Anthony
 // 2020
@@ -169,5 +168,3 @@ public:
     Vect3 v;
     Vect3 n;
 };
-
-#endif

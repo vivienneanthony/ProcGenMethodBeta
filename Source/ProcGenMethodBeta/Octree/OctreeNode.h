@@ -18,10 +18,8 @@ enum class Octant : unsigned char
     Quadrant7 = 0x80
 };
 
-#define OCTANTS 8
-#define INITIALBOUND 512
-#define LODDEPTH 16
-
+#define OCTANTS 8                                                       // Maximum Octants
+#define LODDEPTH 16                                                     // Maximum Depth
 
 // Child for a octree
 class OctreeNode
@@ -41,10 +39,7 @@ public:
     OctreeNode *Node[OCTANTS]; // Pointers for each octant
 
     // depth preset
-    unsigned int depth = 0; // Track depth
-    
-    // Get All Nodes;
-    TArray<OctreeNode *> AllNodes; // All
+    unsigned int depth = 0; // Track depth    
 
     // Points in a vector
     std::vector<PointV3> PointList; // Could be used to hold vertex
@@ -71,6 +66,8 @@ public:
     void ClearNodesAll();    // Clear all nodes
 
     void GetAllNodesAtDepth(unsigned int indepth, TArray<OctreeNode *> &index);
+    
+    bool HasChild();       // Check child
 
-    bool HasChild();
+    bool VectorInNode(Vect3 point, float boundradius, float tolerance);   // Vector in Node
 };

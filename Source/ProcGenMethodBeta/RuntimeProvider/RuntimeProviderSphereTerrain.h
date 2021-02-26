@@ -24,6 +24,8 @@
 class URuntimeMeshModifier;
 class URuntimeMeshModifierNormals;
 
+#define MAXOCTREENODEDEPTH 3
+
 // Class
 UCLASS()
 class PROCGENMETHODBETA_API URuntimeProviderSphereTerrain : public URuntimeMeshProvider
@@ -46,6 +48,13 @@ public:
 
 	UFUNCTION()
 	virtual void SetMarchingCubeParameters(FMeshMarchingCubeParameters inParameters);
+
+	UFUNCTION()
+	virtual void Generate();
+
+	UFUNCTION()
+	virtual void GenerateSection(uint32 section);
+
 
 	UPROPERTY()
 	int32 MaxLOD;
@@ -81,6 +90,20 @@ public:
 	UPROPERTY()
 	TArray<URuntimeMeshModifier *> CurrentMeshModifiers;
 
+	UPROPERTY()	
+    bool isInitialized = false;
+
+	UPROPERTY()	
+    bool isInitializedOctree = false;
+		
+	// Pass Through
+	void GetAllNodesAtDepth(int32 depth, TArray<OctreeNode *> & OutputNodesList)
+	{
+		 rootOctreeNode.GetAllNodesAtDepth(depth,  OutputNodesList);
+	}
+
+	// Calledto Generate All Sections in  a area
+	void GenerateTerrainBySections(TArray<uint32> inSections);
 
 protected:
 	// Initialize
@@ -124,7 +147,7 @@ protected:
 
 	// Octree Node Sections	
 	TArray<OctreeNode *> OctreeNodeSections;
-
+ 
 private:
 	// mutable critical
 	mutable FCriticalSection PropertySyncRoot;

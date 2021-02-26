@@ -7,11 +7,10 @@
 
 // Using LODDOF FOR DETAIL LEVEL PER NODE
 
-#define MAXOCTREENODEDEPTH 4
-
 URuntimeMeshProviderSphere::URuntimeMeshProviderSphere()
     : MaxLOD(0), SphereRadius(20000.0f)
 {
+    
     // Set MaxLod to 0
     MaxLOD = 0;
 }
@@ -39,21 +38,10 @@ void URuntimeProviderSphereTerrain::Initialize()
     // Set Material
     SetupMaterialSlot(0, FName("Auto Terrain Material"), AutoTerrainMaterial);
 
-    // Setup regular properties
-    FRuntimeMeshSectionProperties Properties;
-    Properties.bCastsShadow = true;
-    Properties.bIsVisible = true;
-    Properties.MaterialSlot = 0;
-    Properties.bWants32BitIndices = true;
-    Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
-
-    // Generate Tree Base On Max Lod
-    //rootOctreeNode.ClearNodesAll();
-
     // Generate Octree
     rootOctreeNode.BoundRegion.Min = Vect3(-SphereRadius, -SphereRadius, -SphereRadius);
     rootOctreeNode.BoundRegion.Max = Vect3(SphereRadius, SphereRadius, SphereRadius);
-
+    
     // Clear tree
     rootOctreeNode.BuildTree(MAXOCTREENODEDEPTH);
 
@@ -63,7 +51,21 @@ void URuntimeProviderSphereTerrain::Initialize()
     // Return list of nodes
     rootOctreeNode.GetAllNodesAtDepth(MAXOCTREENODEDEPTH, OctreeNodeSections);
 
-    // Log
+    isInitialized = true;
+}
+
+  
+void URuntimeProviderSphereTerrain::Generate()
+{
+     // Setup regular properties
+    FRuntimeMeshSectionProperties Properties;
+    Properties.bCastsShadow = true;
+    Properties.bIsVisible = true;
+    Properties.MaterialSlot = 0;
+    Properties.bWants32BitIndices = true;
+    Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
+
+     // Log
     UE_LOG(LogTemp, Warning, TEXT("Sections %d"), OctreeNodeSections.Num());
 
     // create all sections  // This should get all sections
@@ -73,6 +75,21 @@ void URuntimeProviderSphereTerrain::Initialize()
         this->CreateSection(0, section, Properties);
     }
 }
+
+void URuntimeProviderSphereTerrain::GenerateSection(uint32 section)
+{
+     // Setup regular properties
+    FRuntimeMeshSectionProperties Properties;
+    Properties.bCastsShadow = true;
+    Properties.bIsVisible = true;
+    Properties.MaterialSlot = 0;
+    Properties.bWants32BitIndices = true;
+    Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
+
+    // CreateDefault Section
+    this->CreateSection(0, section, Properties);    
+}
+
 
 bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &MeshData)
 {
@@ -130,7 +147,7 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
     UMeshMarchingCube *sectionMarchingCube = nullptr;
 
     // create a new section
-    sectionMarchingCube = NewObject<UMeshMarchingCube>();
+    sectionMarchingCube = NewObject<UMeshMarchingCube>(this, MakeUniqueObjectName(this, UMeshMarchingCube::StaticClass(), "March"));
     
     // add to pull prevent deletion
     MarchingCubePool.Add(sectionMarchingCube);
@@ -164,7 +181,10 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
     UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Generating for bound  Min %s  Max %s"), *polygonizationBoundRegionMin.ToString(), *polygonizationBoundRegionMax.ToString());
 
     // Version 2 of polygonization
-    sectionMarchingCube->PolygonizationV2(polygonizationBoundRegionMin, polygonizationBoundRegionMax, positions, triangles);
+    bool results = sectionMarchingCube->PolygonizationV2(polygonizationBoundRegionMin, polygonizationBoundRegionMax, positions, triangles);
+     
+    // delete from pool
+    MarchingCubePool.Remove(sectionMarchingCube);
 
     // Write Log
     UE_LOG(LogTemp, Warning, TEXT("Get Section Mesh Lod - Copy to SectionData (Could be a memory move)"));
@@ -182,30 +202,27 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
     FVector Tangent;
     FVector2D TextCoord;
 
-    for (uint32 i = 0; i < positions.Num(); i++)
+    UE_LOG(LogTemp,Warning,TEXT("Positions %d"),positions.Num() );
+    
+    if(results)
     {
-        AddVertex(positions[i], Tangent, Tangent, TextCoord);
-    }
-
-    for (uint32 i = 0; i < triangles.Num(); i += 3)
-    {
-        SectionData.Triangles.AddTriangle(triangles[i], triangles[i + 1], triangles[i + 2]);
-
-        if (bTriangleGenerated == false)
+         for (uint32 i = 0; i < positions.Num(); i++)
         {
-            bTriangleGenerated = true;
+             AddVertex(positions[i], Tangent, Tangent, TextCoord);
+        }
+
+        for (uint32 i = 0; i < triangles.Num(); i += 3)
+        {
+            SectionData.Triangles.AddTriangle(triangles[i], triangles[i + 1], triangles[i + 2]);
+
+            if (bTriangleGenerated == false)
+            {
+                bTriangleGenerated = true;
+            }
         }
     }
 
-    // delete from pool
-    MarchingCubePool.Remove(sectionMarchingCube);
-
-    if (bTriangleGenerated)
-    {
-        return true;
-    }
-
-    return false;
+    return results;
 }
 
 // Get Bounds
@@ -345,6 +362,7 @@ bool URuntimeProviderSphereTerrain::GetCollisionMesh(FRuntimeMeshCollisionData &
 void URuntimeProviderSphereTerrain::SetRenderableSectionAffectsCollision(int32 SectionId, bool bCollisionEnabled)
 {
     bool bShouldMarkCollisionDirty = false;
+ 
     {
         FScopeLock Lock(&SyncRoot);
         if (bCollisionEnabled && !SectionsAffectingCollision.Contains(SectionId))
@@ -371,11 +389,9 @@ void URuntimeProviderSphereTerrain::SetRenderableSectionAffectsCollision(int32 S
     }
 }
 
-// Replacement Create Section Is Called
-void URuntimeProviderSphereTerrain::CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties)
-{
-    bool generatedSection = false;
 
+void URuntimeProviderSphereTerrain::CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties)
+{ 
     // Create a section
     {
         FScopeLock Lock(&MeshSyncRoot);
@@ -385,3 +401,22 @@ void URuntimeProviderSphereTerrain::CreateSection(int32 LODIndex, int32 SectionI
         Super::CreateSection(LODIndex, SectionId, SectionProperties);
     }
 }
+
+void URuntimeProviderSphereTerrain::GenerateTerrainBySections(TArray<uint32> inSections)
+{        
+      // Setup regular properties
+    FRuntimeMeshSectionProperties Properties;
+    Properties.bCastsShadow = true;
+    Properties.bIsVisible = true;
+    Properties.MaterialSlot = 0;
+    Properties.bWants32BitIndices = true;
+    Properties.UpdateFrequency = ERuntimeMeshUpdateFrequency::Infrequent;
+
+    // Generate Each Section
+    for(uint32 section=0;section<inSections.Num();section++)
+    {
+            // CreateDefault Section
+            this->CreateSection(0, inSections[section], Properties);    
+    }
+};
+

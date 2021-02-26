@@ -15,8 +15,17 @@
 
 #include "../RuntimeProvider/RuntimeProviderSphereTerrain.h"
 
+#include "../Marker/TerrainMarker.h"
+
+// Chunk Manager
+#include "../ChunkManager/ProcChunkManager.h"
+
 // Marching Cube
 #include "../MarchingCube/MeshMarchingCube.h"
+
+
+#include "Kismet/GameplayStatics.h"
+
 
 #include "WorldActor.generated.h"
 
@@ -66,9 +75,6 @@ public:
 	float in_noiseCutoffTerrain = 0.2f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	int32 in_cubeCellSize = 128;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	int32 in_cubeSize = 256;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
@@ -80,12 +86,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
 	UMaterial *Material;
 
-	// Runtime work the above fails
+	// RuntimeMeshComponent
 	UPROPERTY()
-	URuntimeMeshComponent *component_RMC;
+	URuntimeMeshComponent * component_RMC = nullptr;
 	
-	UPROPERTY()
-	URuntimeProviderSphereTerrain *SphereTerrainProvider;
+	// Sphere Provier
+	URuntimeProviderSphereTerrain * provider_SphereTerrain = nullptr;
+
+	// Chunk Manager	
+	UProcChunkManager * component_CM = nullptr;
+
+	// Scene Component
+	UPROPERTY()	
+	USceneComponent * component_Scene = nullptr;
 
 protected:
 	// Called when the game starts or when spawned
@@ -94,18 +107,9 @@ protected:
 	// Set Marching Cube Noise Defaults
 	void SetMarchingCubeNoiseDefaults();
 
-	// Test Box
-	void TestSphereProvider();
-
-	// Static
-	void TestStaticProvider();
-
 	// Sphere Terrain
-	void TestProviderSphereTerrain();
-	
-	// Scene Component
-	USceneComponent * SceneComponent = nullptr;
-	
+	void OnConstructionSphereTerrainProvider();
+			
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

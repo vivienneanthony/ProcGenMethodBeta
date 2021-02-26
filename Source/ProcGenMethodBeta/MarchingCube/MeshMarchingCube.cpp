@@ -33,8 +33,7 @@ void UMeshMarchingCube::SetParameters(FMeshMarchingCubeParameters inParameters)
     fractalTypeTerrain = inParameters.fractalTypeTerrain;
     noiseOctavesTerrain = inParameters.noiseOctavesTerrain;
     noiseFrequencyTerrain = inParameters.noiseFrequencyTerrain;
-    noiseCutoffTerrain = inParameters.noiseCutoffTerrain;
-    cubeCellSize = inParameters.cubeCellSize;
+    noiseCutoffTerrain = inParameters.noiseCutoffTerrain;    
     cubeSize = inParameters.cubeSize;
     surfaceLevel = inParameters.surfaceLevel;
     coreLevel = inParameters.coreLevel;
@@ -61,11 +60,6 @@ void UMeshMarchingCube::InitializeNoiseGridData()
     fastNoiseWrapperTerrain->SetFractalType(fractalTypeTerrain);
     fastNoiseWrapperTerrain->SetFrequency(noiseFrequencyTerrain);
     fastNoiseWrapperTerrain->SetOctaves(noiseOctavesTerrain);
-
-    // Empty data
-    verticesData.Empty();
-    trianglesData.Empty();
-    verticesNormalData.Empty();
 }
 
 //
@@ -79,7 +73,7 @@ void UMeshMarchingCube::InitializeNoiseGridData()
 //
 
 // This creates the vertex from data
-void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector inBoundaryRegionMax, TArray<FVector> &verticesPolygonizationData, TArray<int32> &trianglesPolygonizationData)
+bool UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector inBoundaryRegionMax, TArray<FVector> &verticesPolygonizationData, TArray<int32> &trianglesPolygonizationData)
 {
     // copy cutoff from valuable
     float isolevel = noiseCutoff;
@@ -105,6 +99,8 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
 
     // cubesize wouldl usemaxlod
     UE_LOG(LogTemp, Warning, TEXT("PolygonizationV2 Process"));
+
+    bool triangles = false;
 
     // get all eight points and determine the configuration
     for (int32 z = 0; z < cubeSize; z++)
@@ -195,6 +191,8 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
                     trianglesPolygonizationData.Add(index0);
                     trianglesPolygonizationData.Add(index1);
                     trianglesPolygonizationData.Add(index2);
+
+                    if(triangles==false) {triangles=true;};
                 }
             }
         }
@@ -202,6 +200,8 @@ void UMeshMarchingCube::PolygonizationV2(FVector inBoundaryRegionMin, FVector in
 
     // Debug Log
     //UE_LOG(LogTemp, Warning, TEXT("Generated Vertices %d  Triangles %d"), verticesPolygonizationData.Num(), trianglesPolygonizationData.Num());
+
+    return triangles;
 }
 
 // Calculate Cell Data V2
@@ -330,40 +330,4 @@ float UMeshMarchingCube::distanceSquare(FVector v1, FVector v2)
     float combined = distance1 + distance2 + distance3;
 
     return (float)FGenericPlatformMath::Sqrt(combined);
-}
-
-// Getter
-TArray<FVector> UMeshMarchingCube::GetVerticesData()
-{
-    return verticesData;
-}
-
-// Getter
-TArray<int32> UMeshMarchingCube::GetTrianglesData()
-{
-    return trianglesData;
-}
-
-// Getter
-TArray<FVector> UMeshMarchingCube::GetTangentXData()
-{
-    return tangentXData;
-}
-
-// Getter
-TArray<FVector> UMeshMarchingCube::GetTangentZData()
-{
-    return tangentZData;
-}
-
-// Getter
-TArray<FVector2D> UMeshMarchingCube::GetColorData()
-{
-    return colorData;
-}
-
-// Getter
-TArray<FVector> UMeshMarchingCube::GetNormalData()
-{
-    return verticesNormalData;
 }

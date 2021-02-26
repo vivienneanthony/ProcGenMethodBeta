@@ -14,6 +14,10 @@
 #include "MarchingCubeUtil.h"
 #include "MarchingCubeCell.h"
 
+// RuntimeMeshComponent Headers
+#include "RuntimeMeshProvider.h"
+#include "RuntimeMeshComponentPlugin.h"
+
 #include "../Structures/MeshMarchingCubeParameters.h"
 
 #include "MeshMarchingCube.generated.h"
@@ -36,26 +40,7 @@ public:
 
 	// Polygonization
 	UFUNCTION(BlueprintCallable)
-	void PolygonizationV2(FVector inBoundaryRegionMin, FVector inBoundaryRegionMax, TArray<FVector> &verticesPolygonizationData, TArray<int32> &trianglesPolygonizationData);
-
-	// Getters
-	UFUNCTION(BlueprintCallable)
-	TArray<FVector> GetVerticesData();
-
-	UFUNCTION(BlueprintCallable)
-	TArray<int32> GetTrianglesData();
-
-	UFUNCTION(BlueprintCallable)
-	TArray<FVector> GetNormalData();
-
-	UFUNCTION(BlueprintCallable)
-	TArray<FVector> GetTangentXData();
-
-	UFUNCTION(BlueprintCallable)
-	TArray<FVector> GetTangentZData();
-
-	UFUNCTION(BlueprintCallable)
-	TArray<FVector2D> GetColorData();
+	bool PolygonizationV2(FVector inBoundaryRegionMin, FVector inBoundaryRegionMax, TArray<FVector> &verticesPolygonizationData, TArray<int32> &trianglesPolygonizationData);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	EFastNoise_NoiseType noiseType = EFastNoise_NoiseType::Simplex;
@@ -88,9 +73,6 @@ public:
 	float noiseCutoffTerrain = 0.2f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	int32 cubeCellSize = 128;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
 	int32 cubeSize = 256;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
@@ -113,25 +95,6 @@ public:
 	UPROPERTY();
 	FVector BoundRegionMax;
 
-	// Vertice Data
-	UPROPERTY()
-	TArray<FVector> verticesData;  // not used
-
-	UPROPERTY()
-	TArray<int32> trianglesData;  // not used
-
-	UPROPERTY()
-	TArray<FVector> verticesNormalData;  // not used
-
-	// required for runtimemesh
-	UPROPERTY()
-	TArray<FVector> tangentXData; // not used
-
-	UPROPERTY()
-	TArray<FVector> tangentZData; // not used
-
-	UPROPERTY()
-	TArray<FVector2D> colorData;  // not used
 
 protected:
 		// Do Intrepreation
@@ -142,4 +105,7 @@ protected:
 
 	// Marchiing
 	void CalculateCellDataV2(MarchingCubeCell &cell, uint32 x, uint32 y, uint32 z, FVector inBoundaryRegionMin, FVector inBoundaryRegionMax);
+
+
+	
 };

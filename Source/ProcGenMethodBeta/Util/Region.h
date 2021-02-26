@@ -1,6 +1,4 @@
-#ifndef REGION_H
-#define REGION_H
-
+#pragma once
 // Vivienne Anthony
 // 2021
 
@@ -27,5 +25,3 @@ public:
     Vect3 Max;                                                          // Store max
 
 };
-
-#endif

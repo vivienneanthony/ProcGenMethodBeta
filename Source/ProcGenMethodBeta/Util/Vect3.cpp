@@ -7,8 +7,6 @@
 #include <iostream>
 
 
-
-
 Vect3 Vect3::cubizePoint()
 {
     float copyx = x;

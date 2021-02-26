@@ -130,6 +130,6 @@ namespace States {
     void toggle(T* states, T state) {
         *states ^= state;
     }
-}
+};
 
 #endif

@@ -17,68 +17,78 @@ AWorldActor::AWorldActor(const FObjectInitializer &ObjectInitializer)
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//component_RMC = NewObject<URuntimeMeshComponent>(this, TEXT("RunTimeMeshComponent"));
+	// ChunkManager
+	component_CM = CreateDefaultSubobject<UProcChunkManager>(TEXT("UProcChunkManager"));
+
+	// Runtime Mesh Component
 	component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent0"));
 
-// Use Runtime Mesh Terraini to produce mesh
-	SphereTerrainProvider =  CreateDefaultSubobject<URuntimeProviderSphereTerrain>(TEXT("RuntimeProviderSphereTerrain "));
+	// Use Runtime Mesh Terraini to produce mesh
+	provider_SphereTerrain =  CreateDefaultSubobject<URuntimeProviderSphereTerrain>(TEXT("RuntimeProviderSphereTerrain "));
 
 	// Set component static
 	component_RMC->Mobility = EComponentMobility::Static;
-
+	
 	// make root component
-	RootComponent = component_RMC;
+	RootComponent = component_RMC;	
+
+	// Set References
+	component_CM->SetReferences(provider_SphereTerrain, this);
 }
 
 // Construction
 void AWorldActor::OnConstruction(const FTransform &Transform)
 {
 	Super::OnConstruction(Transform);
-	
-	// Test static
-	TestProviderSphereTerrain();
+		
+	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized C - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
 }
 
 // Called when the game starts or when spawned
 void AWorldActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Set Providervalues
+	OnConstructionSphereTerrainProvider();			
+	
+	// Log
+	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized D - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
+
+	// if ChunkManager is Iniatilized
+	if(component_CM->isInitialized==true)
+	{
+		// Get actor
+    	TArray<AActor *> TerrainMarkerActors;
+		TArray<ATerrainMarker *> TerrainMarkers;
+
+        // Get all actors with tag
+	   UGameplayStatics::GetAllActorsOfClass(GetWorld(),   ATerrainMarker::StaticClass(), TerrainMarkerActors);
+
+		for(AActor * InActor:TerrainMarkerActors)
+		{
+			TerrainMarkers.Add((ATerrainMarker *) InActor);
+		}
+
+		// Generate
+		component_CM->GenerateTerrainByRegion(TerrainMarkers);
+	}else
+	{
+		  UE_LOG(LogTemp, Warning, TEXT("Component_CM not initialized"));     
+	}
 }
 
 // Called every frame
 void AWorldActor::Tick(float DeltaTime)
 {
+	// Actor Tick
 	Super::Tick(DeltaTime);
 }
 
-// Test
-void AWorldActor::TestSphereProvider()
-{
-	// Create A RuntimeMesh Provider
-	URuntimeMeshProviderSphere *SphereProvider = NewObject<URuntimeMeshProviderSphere>(this, TEXT("RuntimeMeshProvider-Sphere"));
-
-	// If setup
-	if (SphereProvider)
-	{
-
-		// Set Sphere Radius Default
-		SphereProvider->SetSphereRadius(20000.0f);
-
-		// If material set material if it exist
-		if (Material)
-		{
-			SphereProvider->SetSphereMaterial(Material);
-		}
-
-		// Initialize
-		component_RMC->Initialize(SphereProvider);
-	}
-}
-
-void AWorldActor::TestProviderSphereTerrain()
+void AWorldActor::OnConstructionSphereTerrainProvider()
 {	
 	// Sphere
-	if (SphereTerrainProvider)
+	if (provider_SphereTerrain)
 	{
 		if (component_RMC)
 		{
@@ -95,57 +105,28 @@ void AWorldActor::TestProviderSphereTerrain()
 			outParameters.fractalTypeTerrain = in_fractalTypeTerrain;
 			outParameters.noiseOctavesTerrain = in_noiseOctavesTerrain;
 			outParameters.noiseFrequencyTerrain = in_noiseFrequencyTerrain;
-			outParameters.noiseCutoffTerrain = in_noiseCutoffTerrain;
-			outParameters.cubeCellSize = in_cubeCellSize;
+			outParameters.noiseCutoffTerrain = in_noiseCutoffTerrain;	
 			outParameters.cubeSize = in_cubeSize;
 			outParameters.surfaceLevel = in_surfaceLevel;
 			outParameters.coreLevel = in_coreLevel;
 
 			// Set Marching Cube Parameters
-			SphereTerrainProvider->SetMarchingCubeParameters(outParameters);
+			provider_SphereTerrain->SetMarchingCubeParameters(outParameters);
 
 			// Set Radius
-			SphereTerrainProvider->SetSphereRadius(20000.0f);
+			provider_SphereTerrain->SetSphereRadius(20000.0f);
 
 			// Set Material
-			SphereTerrainProvider->SetSphereMaterial(Material);
+			provider_SphereTerrain->SetSphereMaterial(Material);	
 
 			// test initialize
-			component_RMC->Initialize(SphereTerrainProvider);
+			component_RMC->Initialize(provider_SphereTerrain);					
+			
+			// Log
+			// UE_LOG(LogTemp, Warning, TEXT("Is Initalized A - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
+
+			// Should Initialize - This can be set to handle rendering specific areas
+			component_CM->Initialize();	
 		}
 	}
-}
-
-// Test
-void AWorldActor::TestStaticProvider()
-{
-	// Fail safe if no mesh data is generated
-	//if (component_MC->GetVerticesData().Num() <= 0)
-	////{
-	//	UE_LOG(LogTemp, Warning, TEXT("No Mesh Data Generated"));
-	//	return;
-	//}
-
-	//URuntimeMeshProviderStatic *StaticProvider = NewObject<URuntimeMeshProviderStatic>(this, TEXT("RuntimeMeshProvider-Static"));
-
-	//if (StaticProvider)
-	//{
-	//	if (component_RMC)
-	//	{
-	// test initialize
-	//component_RMC->Initialize(StaticProvider);
-
-	//StaticProvider->SetupMaterialSlot(0, TEXT("TriMat"), Material);
-
-	// This creates 3 vertex colors
-	//TArray<FColor> Colors{FColor::Blue, FColor::Red, FColor::Green};
-
-	// Blank info
-	//TArray<FVector> EmptyNormals;
-	//TArray<FVector2D> EmptyTexCoords;
-	//TArray<FRuntimeMeshTangent> EmptyTangents;
-
-	//StaticProvider->CreateSectionFromComponents(0, 0, 0, component_MC->GetVerticesData(), component_MC->GetTrianglesData(), EmptyNormals, EmptyTexCoords, Colors, EmptyTangents, ERuntimeMeshUpdateFrequency::Infrequent, true);
-	//	}
-	//}
 }
