@@ -91,9 +91,11 @@ public:
 	URuntimeMeshComponent * component_RMC = nullptr;
 	
 	// Sphere Provier
+	UPROPERTY()
 	URuntimeProviderSphereTerrain * provider_SphereTerrain = nullptr;
 
 	// Chunk Manager	
+	UPROPERTY()
 	UProcChunkManager * component_CM = nullptr;
 
 	// Scene Component

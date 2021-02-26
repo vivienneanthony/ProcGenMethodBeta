@@ -9,8 +9,7 @@
 
 URuntimeMeshProviderSphere::URuntimeMeshProviderSphere()
     : MaxLOD(0), SphereRadius(20000.0f)
-{
-    
+{    
     // Set MaxLod to 0
     MaxLOD = 0;
 }

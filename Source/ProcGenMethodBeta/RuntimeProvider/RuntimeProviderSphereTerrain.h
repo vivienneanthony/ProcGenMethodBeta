@@ -55,7 +55,6 @@ public:
 	UFUNCTION()
 	virtual void GenerateSection(uint32 section);
 
-
 	UPROPERTY()
 	int32 MaxLOD;
 

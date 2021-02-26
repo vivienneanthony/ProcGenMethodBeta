@@ -24,7 +24,7 @@ AWorldActor::AWorldActor(const FObjectInitializer &ObjectInitializer)
 	component_RMC = CreateDefaultSubobject<URuntimeMeshComponent>(TEXT("RuntimeMeshComponent0"));
 
 	// Use Runtime Mesh Terraini to produce mesh
-	provider_SphereTerrain =  CreateDefaultSubobject<URuntimeProviderSphereTerrain>(TEXT("RuntimeProviderSphereTerrain "));
+	provider_SphereTerrain = CreateDefaultSubobject<URuntimeProviderSphereTerrain>(TEXT("RuntimeProviderSphereTerrain "));
 
 	// Set component static
 	component_RMC->Mobility = EComponentMobility::Static;
