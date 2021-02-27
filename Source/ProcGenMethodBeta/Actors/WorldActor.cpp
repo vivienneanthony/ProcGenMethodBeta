@@ -34,6 +34,7 @@ AWorldActor::AWorldActor(const FObjectInitializer &ObjectInitializer)
 
 	// Set References
 	component_CM->SetReferences(provider_SphereTerrain, this);
+
 }
 
 // Construction

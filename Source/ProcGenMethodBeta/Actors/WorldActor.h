@@ -90,17 +90,16 @@ public:
 	UPROPERTY()
 	URuntimeMeshComponent * component_RMC = nullptr;
 	
-	// Sphere Provier
-	UPROPERTY()
-	URuntimeProviderSphereTerrain * provider_SphereTerrain = nullptr;
-
-	// Chunk Manager	
-	UPROPERTY()
-	UProcChunkManager * component_CM = nullptr;
-
 	// Scene Component
 	UPROPERTY()	
 	USceneComponent * component_Scene = nullptr;
+
+	// Sphere Provier
+	UPROPERTY()	
+	URuntimeProviderSphereTerrain * provider_SphereTerrain = nullptr;
+
+	UPROPERTY()	
+	UProcChunkManager * component_CM = nullptr;			
 
 protected:
 	// Called when the game starts or when spawned
@@ -111,7 +110,7 @@ protected:
 
 	// Sphere Terrain
 	void OnConstructionSphereTerrainProvider();
-			
+		
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

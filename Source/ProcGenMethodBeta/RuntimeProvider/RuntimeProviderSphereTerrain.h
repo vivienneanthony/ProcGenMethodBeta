@@ -34,9 +34,14 @@ class PROCGENMETHODBETA_API URuntimeProviderSphereTerrain : public URuntimeMeshP
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
-	float SphereRadius;
 
+	UFUNCTION()
+	// Calledto Generate All Sections in  a area
+	void GenerateTerrainBySections(TArray<uint32> inSections);
+
+	UFUNCTION()
+	bool GetIsInitialized() {return isInitialized; };
+	
 	UFUNCTION()
 	float GetSphereRadius() const;
 
@@ -54,6 +59,9 @@ public:
 
 	UFUNCTION()
 	virtual void GenerateSection(uint32 section);
+
+	UPROPERTY()
+	float SphereRadius;
 
 	UPROPERTY()
 	int32 MaxLOD;
@@ -95,14 +103,12 @@ public:
 	UPROPERTY()	
     bool isInitializedOctree = false;
 		
-	// Pass Through
+	
 	void GetAllNodesAtDepth(int32 depth, TArray<OctreeNode *> & OutputNodesList)
 	{
 		 rootOctreeNode.GetAllNodesAtDepth(depth,  OutputNodesList);
-	}
 
-	// Calledto Generate All Sections in  a area
-	void GenerateTerrainBySections(TArray<uint32> inSections);
+	}
 
 protected:
 	// Initialize

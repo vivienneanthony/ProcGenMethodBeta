@@ -29,7 +29,12 @@ class PROCGENMETHODBETA_API UProcChunkManager : public UObject
 public:			
 	UPROPERTY()
 	bool isInitialized = false;
-
+	
+	UPROPERTY(Instanced)			
+	URuntimeProviderSphereTerrain * parentRuntimeProvider;
+	
+	UPROPERTY()
+	AActor * parentActor;
 
 public:
 	// Initialize
@@ -42,14 +47,11 @@ public:
 	void GenerateTerrainByRegion(TArray<ATerrainMarker *> inTerrainMarkers);
 	
 protected:	
-	
-	URuntimeProviderSphereTerrain * parentRuntimeProvider;
 		
-	AActor * parentActor;
-
 	// All generated ndoes
 	OctreeNode * rootOctreeNode = nullptr;
 
 	// Octree Node Sections	
 	TArray<OctreeNode *> OctreeNodeSections;	
+
 };

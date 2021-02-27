@@ -13,7 +13,7 @@ void UProcChunkManager::Initialize()
 	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized B - %s"),  (parentRuntimeProvider->isInitialized ? TEXT("True") : TEXT("False")));
 
     // check if the runtime provider is initialized
-    if(parentRuntimeProvider->isInitialized)
+    if(parentRuntimeProvider->GetIsInitialized())
     {
         // set is intialized
         isInitialized=true;        
