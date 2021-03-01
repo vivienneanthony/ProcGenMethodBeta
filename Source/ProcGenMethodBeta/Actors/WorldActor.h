@@ -93,7 +93,7 @@ public:
 	UMaterial *Material;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-	float radius = 20000.0f;
+	float in_atmosphereLevel= 40000.0f;
 
 	// RuntimeMeshComponent
 	UPROPERTY()
@@ -110,8 +110,11 @@ public:
 	UPROPERTY()	
 	UProcChunkManager * component_CM = nullptr;		
 
-	//UPROPERTY()
+	UPROPERTY()
 	USphereComponent * component_Sphere = nullptr;	
+
+	UPROPERTY()
+	USphereComponent * component_VisibilitySphere = nullptr;	
 
 	// declare overlap begin function
 	UFUNCTION()
@@ -136,3 +139,4 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 };
+

@@ -38,34 +38,69 @@ AWorldActor::AWorldActor(const FObjectInitializer &ObjectInitializer)
 	// Sphere component
 	component_Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("ComponentSphere"));
 
+	// Sphere component
+	component_VisibilitySphere = CreateDefaultSubobject<USphereComponent>(TEXT("VisibilitySphere"));
+
 	// Set Size
 	if(IsValid(component_Sphere))
 	{
-		component_Sphere->InitSphereRadius(radius);;
+		component_Sphere->InitSphereRadius(in_atmosphereLevel);
 
 		 // declare overlap events
 		component_Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWorldActor::OnOverlapBegin); 
 		component_Sphere->OnComponentEndOverlap.AddDynamic(this, &AWorldActor::OnOverlapEnd); 
 
+		// Allow Overall
 		component_Sphere->SetCollisionProfileName(TEXT("OverlapAllDynamics"));
 		component_Sphere->SetGenerateOverlapEvents(true);
 
+		// 	Render in game
+		component_Sphere->SetHiddenInGame(false);
 	}
+
+	// Set Size
+	if(IsValid(component_VisibilitySphere))
+	{
+		// in core level
+		component_VisibilitySphere->InitSphereRadius(in_coreLevel);
+
+		// Allow Overall
+		component_VisibilitySphere->SetCollisionProfileName(TEXT("NoCollision"));
+		component_VisibilitySphere->SetGenerateOverlapEvents(false);
+
+		// 	Render in game
+		component_VisibilitySphere->SetHiddenInGame(false);
+	}
+
 }
 
 // Construction
 void AWorldActor::OnConstruction(const FTransform &Transform)
 {
+	// Get Scale
+	FVector inScale = GetActorScale3D();
 
-	// Set Size
+	// Set Sphere Size For Reference
 	if(IsValid(component_Sphere))
 	{
-		component_Sphere->SetSphereRadius(radius, true);;
+		
+		// precalculate
+		float radius = in_atmosphereLevel*inScale.X;
+
+		component_Sphere->SetSphereRadius(radius, true);
+	}
+
+	// Set Sphere Size For Reference
+	if(IsValid(component_VisibilitySphere))
+	{
+		// precalculate
+		float radius = in_coreLevel*inScale.X;		
+
+		component_VisibilitySphere->SetSphereRadius(radius, false);
 	}
 
 	Super::OnConstruction(Transform);
 			
-	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized C - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
 }
 
 // Called when the game starts or when spawned
@@ -76,9 +111,6 @@ void AWorldActor::BeginPlay()
 	// Set Providervalues
 	OnConstructionSphereTerrainProvider();			
 	
-	// Log
-	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized D - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
-
 	// if ChunkManager is Iniatilized
 	if(component_CM->isInitialized==true)
 	{
@@ -142,8 +174,8 @@ void AWorldActor::OnConstructionSphereTerrainProvider()
 	// Set Marching Cube Parameters
 	provider_SphereTerrain->SetMarchingCubeParameters(outParameters);
 
-	// Set Radius
-	provider_SphereTerrain->SetSphereRadius(20000.0f);
+	// Set Radius = Basically the bound box
+	provider_SphereTerrain->SetSphereRadius(in_surfaceLevel);
 
 	// Set Material
 	provider_SphereTerrain->SetSphereMaterial(Material);	
@@ -151,14 +183,9 @@ void AWorldActor::OnConstructionSphereTerrainProvider()
 	// test initialize
 	component_RMC->Initialize(provider_SphereTerrain);					
 	
-	// Log
-	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized A - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
-
 	// Should Initialize - This can be set to handle rendering specific areas
-	component_CM->Initialize();	
-	
+	component_CM->Initialize();		
 }
-
 
 void AWorldActor::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
