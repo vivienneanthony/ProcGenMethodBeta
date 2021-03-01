@@ -18,6 +18,7 @@ public:
     bool InRegion(Vect3 checkVect3);                                    // UPS deliver
 
     Vect3 CalculateCenter();                                            // Calculate Center
+    Vect3 CalculateCenterScale(const Vect3 inScale);                    // Calculate Center
 
     Vect3 CalculateDimensions();                                        // Get dimension
 

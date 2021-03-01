@@ -390,3 +390,44 @@ bool OctreeNode::VectorInNode(Vect3 point, float boundradius, float tolerance)
 
     return false;
 }
+
+// Check if any children exist before allowing delete
+bool OctreeNode::VectorInNodeInScale(Vect3 point, float boundradius, float tolerance, Vect3 scale)
+{
+    // Always set tolerance to 1
+    if(tolerance<1.0f)
+    {
+        tolerance = 1.0f;
+    }
+
+    tolerance = 1.0f;
+    
+    // Create a boundary area
+    Vect3 pointMin = Vect3(point.x-(boundradius*tolerance), point.y-(boundradius*tolerance), point.z-(boundradius*tolerance));
+    Vect3 pointMax = Vect3(point.x+(boundradius*tolerance), point.y+(boundradius*tolerance), point.z+(boundradius*tolerance));
+
+        
+    //Vect3 BoundCenter = BoundRegion.CalculateCenter()*scale;
+    Vect3 BoundRegionMin = BoundRegion.Min * scale;
+    Vect3 BoundRegionMax = BoundRegion.Max * scale;
+
+    //float length = std::sqrt(((BoundCenter.x-point.x)*(BoundCenter.x-point.x))+
+    //               ((BoundCenter.y-point.y)*(BoundCenter.y-point.y))+
+    //               ((BoundCenter.z-point.z)*(BoundCenter.z-point.z)));
+
+    if((BoundRegionMin.x>=pointMin.x)&&
+       (BoundRegionMin.y>=pointMin.y)&&
+       (BoundRegionMin.z>=pointMin.z)&&
+       (BoundRegionMax.x<=pointMax.x)&&
+       (BoundRegionMax.y<=pointMax.y)&&
+       (BoundRegionMax.z<=pointMax.z))
+       {
+           return true;
+       }
+
+
+    //if(length<boundradius)    
+    //    return true;
+
+    return false;
+}

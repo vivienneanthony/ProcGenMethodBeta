@@ -27,12 +27,15 @@ class PROCGENMETHODBETA_API UProcChunkManager : public UObject
 	GENERATED_BODY()
 	
 public:			
+	// Is InitializedFlag
 	UPROPERTY()
 	bool isInitialized = false;
 	
+	// Copy ofinstanceof original provider
 	UPROPERTY(Instanced)			
 	URuntimeProviderSphereTerrain * parentRuntimeProvider;
 	
+	// parent actor used for scale check refernce 
 	UPROPERTY()
 	AActor * parentActor;
 
@@ -40,8 +43,8 @@ public:
 	// Initialize
 	void Initialize();
 
-	// Set References
-	bool SetReferences(URuntimeProviderSphereTerrain * inRuntimeProvider, AActor * inActor);
+	// Set References of Provider Terrain and Calling Actor
+	void SetReferences(URuntimeProviderSphereTerrain * inRuntimeProvider, AActor * inActor);
 
 	// Get region by using terrain marker
 	void GenerateTerrainByRegion(TArray<ATerrainMarker *> inTerrainMarkers);
@@ -53,5 +56,4 @@ protected:
 
 	// Octree Node Sections	
 	TArray<OctreeNode *> OctreeNodeSections;	
-
 };

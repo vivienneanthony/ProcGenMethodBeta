@@ -42,5 +42,8 @@ void ATerrainMarker::OnConstruction(const FTransform &Transform)
 
 	// test
 	collisionMesh->SetBoxExtent(FVector(radius, radius, radius), false);
+
+	// Set Hidden In Game
+	SetActorHiddenInGame(visibilityInGame);
 	
 }

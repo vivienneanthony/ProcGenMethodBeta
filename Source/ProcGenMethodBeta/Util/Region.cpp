@@ -36,6 +36,17 @@ Vect3 Region::CalculateCenter()
     return (Max+Min)/2.0f;
 }
 
+
+// Calculate Center
+Vect3 Region::CalculateCenterScale(const Vect3 inScale)
+{
+    Vect3 MinScale = Min*inScale;
+    Vect3 MaxScale = Max*inScale;
+    
+    return (MaxScale+MinScale)/2.0f;
+}
+
+
 Vect3 Region::CalculateDimensions()
 {
     // return absolute of each point

@@ -121,7 +121,7 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
 
             // Set Mesh Data
             MeshData = Section->Get<1>();
-
+	
             //Set this to affect collision
             SetRenderableSectionAffectsCollision(SectionId, true);
 
@@ -137,6 +137,9 @@ bool URuntimeProviderSphereTerrain::GetSectionMeshForLOD(int32 LODIndex, int32 S
 
     return false;
 }
+
+
+
 
 // Get section for a specific LOD
 bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 SectionId, FRuntimeMeshRenderableMeshData &SectionData)
@@ -219,7 +222,16 @@ bool URuntimeProviderSphereTerrain::GenerateSectionData(int32 LODIndex, int32 Se
                 bTriangleGenerated = true;
             }
         }
+
+        // Add to table - RenderableCollisionData
+	    FScopeLock Lock(&SyncRoot);
+	    FRuntimeMeshRenderableCollisionData& SectionCacheData = RenderableCollisionData.FindOrAdd(SectionId);
+	    SectionCacheData = FRuntimeMeshRenderableCollisionData(SectionData);
+        MarkCollisionDirty();
     }
+
+
+    
 
     return results;
 }
@@ -390,7 +402,7 @@ void URuntimeProviderSphereTerrain::SetRenderableSectionAffectsCollision(int32 S
 
 
 void URuntimeProviderSphereTerrain::CreateSection(int32 LODIndex, int32 SectionId, const FRuntimeMeshSectionProperties &SectionProperties)
-{ 
+{     
     // Create a section
     {
         FScopeLock Lock(&MeshSyncRoot);

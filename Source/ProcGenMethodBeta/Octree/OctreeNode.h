@@ -70,4 +70,6 @@ public:
     bool HasChild();       // Check child
 
     bool VectorInNode(Vect3 point, float boundradius, float tolerance);   // Vector in Node
+
+    bool VectorInNodeInScale(Vect3 point, float boundradius, float tolerance, Vect3 inScale);   // Vector in Node
 };

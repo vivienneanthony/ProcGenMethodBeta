@@ -17,12 +17,18 @@
 
 #include "../Marker/TerrainMarker.h"
 
+#include "GravityMovementComponent.h"
+#include "GravityCharacter.h"
+
+#include "../Public/DirGravityInterface.h"
+
 // Chunk Manager
 #include "../ChunkManager/ProcChunkManager.h"
 
 // Marching Cube
 #include "../MarchingCube/MeshMarchingCube.h"
 
+#include "Components/SphereComponent.h"
 
 #include "Kismet/GameplayStatics.h"
 
@@ -75,7 +81,7 @@ public:
 	float in_noiseCutoffTerrain = 0.2f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
-	int32 in_cubeSize = 256;
+	int32 in_cubeSize = 32;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Levels")
 	float in_surfaceLevel = 20000.0f;
@@ -85,6 +91,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
 	UMaterial *Material;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	float radius = 20000.0f;
 
 	// RuntimeMeshComponent
 	UPROPERTY()
@@ -99,7 +108,19 @@ public:
 	URuntimeProviderSphereTerrain * provider_SphereTerrain = nullptr;
 
 	UPROPERTY()	
-	UProcChunkManager * component_CM = nullptr;			
+	UProcChunkManager * component_CM = nullptr;		
+
+	//UPROPERTY()
+	USphereComponent * component_Sphere = nullptr;	
+
+	// declare overlap begin function
+	UFUNCTION()
+	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	// declare overlap end function
+	UFUNCTION()
+	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 
 protected:
 	// Called when the game starts or when spawned

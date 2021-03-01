@@ -6,11 +6,21 @@
 
 #include "Kismet/GameplayStatics.h"
 
-// Initialize
+// Initialize Chunk Manager
 void UProcChunkManager::Initialize()
 {    
     // Log    
 	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized B - %s"),  (parentRuntimeProvider->isInitialized ? TEXT("True") : TEXT("False")));
+    if(!IsValid(parentRuntimeProvider))
+    {
+        // Log
+        UE_LOG(LogTemp, Warning, TEXT("Component_CM - var parentRuntimeProvider Invalid"));     
+        
+        // Log
+        UE_LOG(LogTemp, Warning, TEXT("Component_CM - Skip parentRuntimeProvider check"));     
+
+        return;
+    }
 
     // check if the runtime provider is initialized
     if(parentRuntimeProvider->GetIsInitialized())
@@ -30,21 +40,19 @@ void UProcChunkManager::Initialize()
     }
 };
 
-bool UProcChunkManager::SetReferences(URuntimeProviderSphereTerrain * inRuntimeProvider, AActor * inActor)
+// Set References of Provider Terrain and Calling Actor
+void UProcChunkManager::SetReferences(URuntimeProviderSphereTerrain * inRuntimeProvider, AActor * inActor)
 {
-    // set return flag
-    bool returnflag = false;
-
     // Save the runtime Provider - Would be call often	
 	parentRuntimeProvider = inRuntimeProvider;
 	
     // keep the parent inactor	
 	parentActor = inActor;
 
-    return returnflag;
+    return;
 };
 
-// inPositions
+// Generate Terrrion By Regions (Not Used)
 void UProcChunkManager::GenerateTerrainByRegion(TArray<ATerrainMarker *> inTerrainMarkers)
 {        
     // Array to save selected nodes
@@ -55,6 +63,12 @@ void UProcChunkManager::GenerateTerrainByRegion(TArray<ATerrainMarker *> inTerra
 
     // section idx
     uint32 section=0;
+
+    // Convertto our custom vector class
+    Vect3 actorScaleVect3 = Vect3(10.0f, 10.0f, 10.0f);
+
+    // Write Scale
+    //UE_LOG(LogTemp, Warning, TEXT("Scale %s"), *actorScale.ToString());
 
     // loop through each actor    
    	for (ATerrainMarker * InMarker : inTerrainMarkers)
@@ -72,7 +86,7 @@ void UProcChunkManager::GenerateTerrainByRegion(TArray<ATerrainMarker *> inTerra
         for(OctreeNode * octnode : OctreeNodeSections)
         {
             // Check in a certain radius
-            if(octnode->VectorInNode(Vect3(InLocation.X, InLocation.Y, InLocation.Z), InRadius, 2.0f))                        
+            if(octnode->VectorInNodeInScale(Vect3(InLocation.X, InLocation.Y, InLocation.Z), InRadius, 2.0f,actorScaleVect3))                        
             {
                 //Generate Section
                 if(SectionsPool.Contains(section)==false)

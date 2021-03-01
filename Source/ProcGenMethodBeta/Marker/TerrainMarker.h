@@ -21,6 +21,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float radius = 2000.0f;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool visibilityInGame = true;
+
 	UPROPERTY()
 	UBoxComponent* collisionMesh = nullptr;
 

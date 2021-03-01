@@ -35,13 +35,36 @@ AWorldActor::AWorldActor(const FObjectInitializer &ObjectInitializer)
 	// Set References
 	component_CM->SetReferences(provider_SphereTerrain, this);
 
+	// Sphere component
+	component_Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("ComponentSphere"));
+
+	// Set Size
+	if(IsValid(component_Sphere))
+	{
+		component_Sphere->InitSphereRadius(radius);;
+
+		 // declare overlap events
+		component_Sphere->OnComponentBeginOverlap.AddDynamic(this, &AWorldActor::OnOverlapBegin); 
+		component_Sphere->OnComponentEndOverlap.AddDynamic(this, &AWorldActor::OnOverlapEnd); 
+
+		component_Sphere->SetCollisionProfileName(TEXT("OverlapAllDynamics"));
+		component_Sphere->SetGenerateOverlapEvents(true);
+
+	}
 }
 
 // Construction
 void AWorldActor::OnConstruction(const FTransform &Transform)
 {
+
+	// Set Size
+	if(IsValid(component_Sphere))
+	{
+		component_Sphere->SetSphereRadius(radius, true);;
+	}
+
 	Super::OnConstruction(Transform);
-		
+			
 	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized C - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
 }
 
@@ -75,7 +98,8 @@ void AWorldActor::BeginPlay()
 		component_CM->GenerateTerrainByRegion(TerrainMarkers);
 	}else
 	{
-		  UE_LOG(LogTemp, Warning, TEXT("Component_CM not initialized"));     
+		// Log
+		UE_LOG(LogTemp, Warning, TEXT("Component_CM not initialized"));     
 	}
 }
 
@@ -88,46 +112,71 @@ void AWorldActor::Tick(float DeltaTime)
 
 void AWorldActor::OnConstructionSphereTerrainProvider()
 {	
-	// Sphere
-	if (provider_SphereTerrain)
+	// Check all component
+	if(!IsValid(provider_SphereTerrain)||!IsValid(component_CM)||!IsValid(component_RMC))
 	{
-		if (component_RMC)
-		{
-			// Create a parameter
-			FMeshMarchingCubeParameters outParameters;
+		// Log
+		UE_LOG(LogTemp, Warning, TEXT("AWorldActor - Provider, Chunk Manager, or RMC fail")); 
 
-			// copy defaults
-			outParameters.noiseType = in_noiseType;
-			outParameters.fractalType = in_fractalType;
-			outParameters.noiseOctaves = in_noiseOctaves;
-			outParameters.noiseFrequency = in_noiseFrequency;
-			outParameters.noiseCutoff = in_noiseCutoff;
-			outParameters.noiseTypeTerrain = in_noiseTypeTerrain;
-			outParameters.fractalTypeTerrain = in_fractalTypeTerrain;
-			outParameters.noiseOctavesTerrain = in_noiseOctavesTerrain;
-			outParameters.noiseFrequencyTerrain = in_noiseFrequencyTerrain;
-			outParameters.noiseCutoffTerrain = in_noiseCutoffTerrain;	
-			outParameters.cubeSize = in_cubeSize;
-			outParameters.surfaceLevel = in_surfaceLevel;
-			outParameters.coreLevel = in_coreLevel;
+		return;
+	}
 
-			// Set Marching Cube Parameters
-			provider_SphereTerrain->SetMarchingCubeParameters(outParameters);
+	// Create a parameter
+	FMeshMarchingCubeParameters outParameters;
 
-			// Set Radius
-			provider_SphereTerrain->SetSphereRadius(20000.0f);
+	// copy defaults
+	outParameters.noiseType = in_noiseType;
+	outParameters.fractalType = in_fractalType;
+	outParameters.noiseOctaves = in_noiseOctaves;
+	outParameters.noiseFrequency = in_noiseFrequency;
+	outParameters.noiseCutoff = in_noiseCutoff;
+	outParameters.noiseTypeTerrain = in_noiseTypeTerrain;
+	outParameters.fractalTypeTerrain = in_fractalTypeTerrain;
+	outParameters.noiseOctavesTerrain = in_noiseOctavesTerrain;
+	outParameters.noiseFrequencyTerrain = in_noiseFrequencyTerrain;
+	outParameters.noiseCutoffTerrain = in_noiseCutoffTerrain;	
+	outParameters.cubeSize = in_cubeSize;
+	outParameters.surfaceLevel = in_surfaceLevel;
+	outParameters.coreLevel = in_coreLevel;
 
-			// Set Material
-			provider_SphereTerrain->SetSphereMaterial(Material);	
+	// Set Marching Cube Parameters
+	provider_SphereTerrain->SetMarchingCubeParameters(outParameters);
 
-			// test initialize
-			component_RMC->Initialize(provider_SphereTerrain);					
-			
-			// Log
-			// UE_LOG(LogTemp, Warning, TEXT("Is Initalized A - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
+	// Set Radius
+	provider_SphereTerrain->SetSphereRadius(20000.0f);
 
-			// Should Initialize - This can be set to handle rendering specific areas
-			component_CM->Initialize();	
+	// Set Material
+	provider_SphereTerrain->SetSphereMaterial(Material);	
+
+	// test initialize
+	component_RMC->Initialize(provider_SphereTerrain);					
+	
+	// Log
+	// UE_LOG(LogTemp, Warning, TEXT("Is Initalized A - %s"),  (provider_SphereTerrain->isInitialized ? TEXT("True") : TEXT("False")));
+
+	// Should Initialize - This can be set to handle rendering specific areas
+	component_CM->Initialize();	
+	
+}
+
+
+void AWorldActor::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// Confirm its a character
+	if (AGravityCharacter* OtherCharacter = Cast<AGravityCharacter>(OtherActor))
+	{
+   		 // do stuff with OtherCharacter
+		if (OtherCharacter->GetClass()->ImplementsInterface(UDirGravityInterface::StaticClass()))
+		{		
+		   IDirGravityInterface * interfacecall = Cast<IDirGravityInterface>(OtherCharacter);
+
+		   interfacecall->Execute_UpdateGravity(OtherCharacter);
 		}
 	}
+
+} 
+
+void AWorldActor::OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
 }
