@@ -29,18 +29,21 @@ public:
 	UFUNCTION(BlueprintCallable)	
 	void Initialize();
  
+    UFUNCTION(BlueprintCallable)	
+	void DoTrace();
+
 	// Just need array of instances
 	UPROPERTY(BlueprintReadWrite)
 	TArray<UHierarchicalInstancedStaticMeshComponent *> HISMArray;
  
-    UFUNCTION(BlueprintCallable)	
-	void DoTrace();
-
-    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category ="Play Info (ReadOnly)")
     APawn * playerPawn = nullptr;
 
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category ="Play Info (ReadOnly)")
     FTransform playerTransform;
+
+    UPROPERTY(BlueprintReadWrite, Category="Debug")
+    bool showDebug = false;
 
 protected:
 	// Called when the game starts or when spawned
@@ -61,16 +64,22 @@ protected:
 	//  Do Trace
 	void TraceDone(const FTraceHandle& TraceHandle, FTraceDatum & TraceData);	
  
+    // Method to force a scan twice
+    bool WaitiingForResponse = false;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
  
 	// End Play
 	virtual void EndPlay(EEndPlayReason::Type endplayReason) override;
- 
- 
+  
 	// Thread Safe
 	TQueue<FTraceCall> TraceCallQueue;
+
+    // Cache newTransform
+    FTransform newTransform;
+
  
 };
  

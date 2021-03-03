@@ -8,8 +8,7 @@
 ASpawnHISMActor::ASpawnHISMActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-	
+	PrimaryActorTick.bCanEverTick = true;	
 }
 
 // Called when the game starts or when spawned
@@ -21,10 +20,7 @@ void ASpawnHISMActor::BeginPlay()
     // Get Player Pawn
     playerPawn = GetWorld()->GetFirstPlayerController()->GetPawn(); 
 
-	Super::BeginPlay();
-
-    
-	
+	Super::BeginPlay();	
 }
 
 // Called every frame
@@ -37,6 +33,12 @@ void ASpawnHISMActor::Tick(float DeltaTime)
     }
 
 	Super::Tick(DeltaTime);
+
+    // If not waiting for a responsedo another trace
+    if(!WaitiingForResponse)
+    {
+        DoTrace();
+    }
 }
 
 // End Play
@@ -87,7 +89,11 @@ void ASpawnHISMActor::Initialize()
 void ASpawnHISMActor::DoTrace()
 {
 	if(TraceCallQueue.IsEmpty())
+    {
+        WaitiingForResponse = false;
+
 		return;
+    }
 	
 	// Create trace call
 	FTraceCall inTraceCall;
@@ -101,8 +107,14 @@ void ASpawnHISMActor::DoTrace()
 	// Log
 	if(IsValid(thisWorld))
 	{
+        // Set Processing
+        WaitiingForResponse = true;
+
 		// if count is more then 0
-		DrawDebugLine(thisWorld, inTraceCall.Start, inTraceCall.End, FColor::Green, false, 1, 0, 1);
+        if(showDebug)
+        {
+		    DrawDebugLine(thisWorld, inTraceCall.Start, inTraceCall.End, FColor::Green, false, 1, 0, 1);
+        }
 
 		// This should do the trace call
 		thisWorld->AsyncLineTraceByChannel(EAsyncTraceType::Single, inTraceCall.Start, inTraceCall.End, ECC_Visibility, collisionParams,
@@ -117,12 +129,35 @@ void ASpawnHISMActor::TraceDone(const FTraceHandle& TraceHandle, FTraceDatum & T
 	if(TraceData.OutHits.Num() > 0)
     {
 		// Hit results
-      	const FHitResult& Result = TraceData.OutHits[0];
+      	const FHitResult& hitResults = TraceData.OutHits[0];
 
 		// Log a hit
-		UE_LOG(LogTemp, Warning, TEXT("OutHit"));
+        if(showDebug)
+        { 
+            UE_LOG(LogTemp, Warning, TEXT("OutHit"));
+        }
+       
+        // Get results and changesize scale to match
+        newTransform.SetLocation(hitResults.Location);
+        newTransform.SetRotation(FQuat(hitResults.Normal.Rotation()));
+
+        // Async Spawn - Prevent Creation on span
+        if(IsValid(HISMArray[0])&&HISMArray.Num())
+        {
+            HISMArray[0]->AddInstanceWorldSpace(newTransform);
+        }
+
     }else
     {
-        UE_LOG(LogTemp, Warning, TEXT("NonHit"));
+        // Show a non hit
+        if(showDebug)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("NonHit"));
+        }
     }
+    
+    WaitiingForResponse = false;
+
+    // Do another trace
+    DoTrace();
 }

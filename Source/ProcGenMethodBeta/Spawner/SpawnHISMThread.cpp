@@ -50,29 +50,28 @@ FVector FSpawnHISMThread::ChooseACoordinate()
 	// Get actor world transform
 	FVector worldLocation = currentThreadActor -> playerTransform.GetLocation();
  
-	worldLocation.X+=FMath::RandRange((float)-100, (float)100);
-	worldLocation.Y+=FMath::RandRange((float)-100, (float)100);
+	worldLocation.X+=FMath::RandRange((float)-1000, (float)1000);
+	worldLocation.Y+=FMath::RandRange((float)-1000, (float)1000);
  
 	return worldLocation;
 }
  
 // Replacement to BP trace - Should be dirt faster
 void FSpawnHISMThread::AsyncTraceCollisionToPoint()
-{
+{    
 	//  Choose a coordinate
 	FVector Start = ChooseACoordinate();
  
 	// Same as square length
-	FVector End = Start * 0.5;
- 
+	FVector End =  FVector(Start.X, Start.Y, -1.0f);
+
 	// trace call
 	FTraceCall OutTraceCall;
  
 	// start and end
 	OutTraceCall.Start = Start;
 	OutTraceCall.End = End;
- 
-    // Add to quere
+   
     currentThreadActor->TraceCallQueue.Enqueue(OutTraceCall);
 
 	return;
