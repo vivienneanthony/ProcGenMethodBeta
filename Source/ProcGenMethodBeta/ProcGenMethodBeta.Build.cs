@@ -29,6 +29,7 @@ public class ProcGenMethodBeta : ModuleRules
 				"FastNoiseGenerator",
 				"FastNoise",
 				"RuntimeMeshComponent",
+				"DirGravity",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

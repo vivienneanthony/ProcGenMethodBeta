@@ -20,15 +20,5 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
-	],
-	"Plugins": [
-		{
-			"Name": "FastNoiseGenerator",
-			"Enabled": true
-		},
-		{
-			"Name": "RuntimeMeshComponent",
-			"Enabled": true
-		}
 	]
 }
