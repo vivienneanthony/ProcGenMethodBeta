@@ -73,7 +73,7 @@ void ASpawnHISMActor::Initialize()
 	if(HISMArray.Num())
 	{
 		// Create new thread
-		workerThread = new FSpawnHISMThread(HISMArray, this);
+		workerThread = new FSpawnHISMThread(EWorldTrace::WorldTrace_FlatWorld, this);
 
 		// Add to container
 		CurrentRunning_workerThread =  FRunnableThread::Create(workerThread, TEXT("WorkerThread"));
@@ -141,12 +141,11 @@ void ASpawnHISMActor::TraceDone(const FTraceHandle& TraceHandle, FTraceDatum & T
         newTransform.SetLocation(hitResults.Location);
         newTransform.SetRotation(FQuat(hitResults.Normal.Rotation()));
 
-        // Async Spawn - Prevent Creation on span
-        if(IsValid(HISMArray[0])&&HISMArray.Num())
-        {
-            HISMArray[0]->AddInstanceWorldSpace(newTransform);
-        }
+        // Async Spawn - Prevent Creation on span - Right now selects the first one but can be change to multiple
+		selectHISM=FMath::RandRange(0, HISMArray.Num()-1);
 
+        HISMArray[selectHISM]->AddInstanceWorldSpace(newTransform);
+        
     }else
     {
         // Show a non hit

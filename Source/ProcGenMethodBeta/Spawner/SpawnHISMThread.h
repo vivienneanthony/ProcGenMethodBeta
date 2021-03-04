@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 
+#include "../Structures/TraceCall.h"
+
+#include "../Enums/WorldTrace.h"
+
 #include "Engine/Classes/Components/StaticMeshComponent.h"
 #include "Engine/Classes/Components/InstancedStaticMeshComponent.h"
 #include "Engine/Classes/Components/HierarchicalInstancedStaticMeshComponent.h"
@@ -21,7 +25,7 @@ class ASpawnHISMActor;
 class PROCGENMETHODBETA_API FSpawnHISMThread : public FRunnable
 {
 	public:
-	FSpawnHISMThread(TArray<UHierarchicalInstancedStaticMeshComponent *> inHISMArray, ASpawnHISMActor * callingActor);
+	FSpawnHISMThread(EWorldTrace traceType, ASpawnHISMActor * callingActor);
 
 	bool bStopThread;
 
@@ -40,7 +44,7 @@ class PROCGENMETHODBETA_API FSpawnHISMThread : public FRunnable
 
 private:
 	// Static Mesh Component		
-	TArray<UHierarchicalInstancedStaticMeshComponent *> HISMArray;
+	EWorldTrace currentTraceType;
 
 	// start trace
 	bool startedtrace;
@@ -59,4 +63,13 @@ private:
 
 	// Choose a coordinate
 	FVector ChooseACoordinate();	
+
+	// Save Start Trace
+	FVector Start;
+
+	// Save End Trace
+	FVector End;
+
+	// Out Trace Call
+	FTraceCall OutTraceCall;
 };

@@ -7,10 +7,15 @@
 #include "SpawnHISMThread.h"
  
 #include "../Structures/TraceCall.h"
- 
+#include "../Structures/PopulateAsset.h"
+
+#include "../Enums/PopulateTypes.h"
+#include "../Enums/WorldTrace.h"
+
 #include "HAL/Runnable.h"
 #include "HAL/RunnableThread.h"
  
+
 #include "Engine/Classes/Components/StaticMeshComponent.h"
 #include "Engine/Classes/Components/InstancedStaticMeshComponent.h"
 #include "Engine/Classes/Components/HierarchicalInstancedStaticMeshComponent.h"
@@ -36,6 +41,12 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	TArray<UHierarchicalInstancedStaticMeshComponent *> HISMArray;
  
+ 	UPROPERTY(BlueprintReadWrite)
+	EPopulateTypes PopulateType;
+
+ 	UPROPERTY(BlueprintReadWrite)
+	TArray<FPopulateAsset> PopulateAssets;
+
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category ="Play Info (ReadOnly)")
     APawn * playerPawn = nullptr;
 
@@ -67,6 +78,8 @@ protected:
     // Method to force a scan twice
     bool WaitiingForResponse = false;
 
+	int32 selectHISM = 0;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -79,6 +92,8 @@ public:
 
     // Cache newTransform
     FTransform newTransform;
+
+	
 
  
 };

@@ -2,16 +2,17 @@
  
  
 // Sets default values
-FSpawnHISMThread::FSpawnHISMThread(TArray<UHierarchicalInstancedStaticMeshComponent *> inHISMArray, ASpawnHISMActor * callingActor)
+FSpawnHISMThread::FSpawnHISMThread(EWorldTrace traceType, ASpawnHISMActor * callingActor)
 {
- 	if(inHISMArray.Num())
+ 	// Is Valid
+	if(IsValid(callingActor))
 	{
-	   HISMArray = inHISMArray;
-	   currentThreadActor = callingActor;
+		currentTraceType = traceType;
+		currentThreadActor = callingActor;
  
-	   // Parameters
-	   collisionParams.bTraceComplex=true;	   		
-	}	
+		// Parameters
+		collisionParams.bTraceComplex=true;	   			
+	}
 }
  
  
@@ -60,14 +61,11 @@ FVector FSpawnHISMThread::ChooseACoordinate()
 void FSpawnHISMThread::AsyncTraceCollisionToPoint()
 {    
 	//  Choose a coordinate
-	FVector Start = ChooseACoordinate();
- 
+	Start = ChooseACoordinate();
+ 	
 	// Same as square length
-	FVector End =  FVector(Start.X, Start.Y, -1.0f);
+	End =  FVector(Start.X, Start.Y, -1.0f);
 
-	// trace call
-	FTraceCall OutTraceCall;
- 
 	// start and end
 	OutTraceCall.Start = Start;
 	OutTraceCall.End = End;

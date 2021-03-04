@@ -1,11 +1,15 @@
 #pragma once
 
+// ProcGenMethodBeta Plugin
+// Developer Vivienne Anthony
+// Copyright (c) 2021 
+
 #include "FastNoiseWrapper.h"
 
 #include "MeshMarchingCubeParameters.generated.h"
 
 USTRUCT()
-struct FMeshMarchingCubeParameters
+struct PROCGENMETHODBETA_API FMeshMarchingCubeParameters
 {
     GENERATED_BODY()
 

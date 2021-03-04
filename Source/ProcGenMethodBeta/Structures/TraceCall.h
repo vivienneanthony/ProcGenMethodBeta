@@ -1,5 +1,8 @@
 #pragma once
 
+// ProcGenMethodBeta Plugin
+// Developer Vivienne Anthony
+// Copyright (c) 2021 
 
 #include "TraceCall.generated.h"
 
