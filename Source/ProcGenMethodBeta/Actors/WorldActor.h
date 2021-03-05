@@ -96,7 +96,7 @@ public:
 	float in_atmosphereLevel= 40000.0f;
 
 	// RuntimeMeshComponent
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	URuntimeMeshComponent * component_RMC = nullptr;
 	
 	// Scene Component

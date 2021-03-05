@@ -358,7 +358,7 @@ bool URuntimeProviderSphereTerrain::GetCollisionMesh(FRuntimeMeshCollisionData &
             CachedSection.Triangles.GetTriangleIndices(Index, IdA, IdB, IdC);
 
             CollisionData.Triangles.SetTriangleIndices(StartTriangle + Index, IdA + FirstVertex, IdB + FirstVertex, IdC + FirstVertex);
-            CollisionData.MaterialIndices.SetMaterialIndex(StartTriangle + Index, SectionId);
+            CollisionData.MaterialIndices.SetMaterialIndex(0, SectionId);
         }
 
         CollisionData.CollisionSources.Emplace(StartTriangle, StartTriangle + NumTriangles - 1, this, SectionId, ERuntimeMeshCollisionFaceSourceType::Renderable);
