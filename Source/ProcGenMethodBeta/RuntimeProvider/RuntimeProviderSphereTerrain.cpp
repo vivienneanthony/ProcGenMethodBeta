@@ -41,8 +41,15 @@ void URuntimeProviderSphereTerrain::Initialize()
     rootOctreeNode.BoundRegion.Min = Vect3(-SphereRadius, -SphereRadius, -SphereRadius);
     rootOctreeNode.BoundRegion.Max = Vect3(SphereRadius, SphereRadius, SphereRadius);
     
-    // Clear tree
-    rootOctreeNode.BuildTree(MAXOCTREENODEDEPTH);
+    if(bUseMarker)
+    {
+        // Clear tree
+        rootOctreeNode.BuildTree(MAXOCTREENODEDEPTH);
+    }
+    else
+    {
+        rootOctreeNode.BuildTreeArea(MAXOCTREENODEDEPTH, markerPosition, markerRadius, markerTolerance, markerScale);
+    }
 
     // Empty
     OctreeNodeSections.Empty();

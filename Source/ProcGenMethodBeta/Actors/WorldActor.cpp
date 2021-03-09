@@ -180,6 +180,31 @@ void AWorldActor::OnConstructionSphereTerrainProvider()
 	// Set Material
 	provider_SphereTerrain->SetSphereMaterial(Material);	
 
+	if(bUseTerrainMarker)
+	{
+		// Get actor
+    	
+		TArray<AActor *> TerrainMarkers;
+
+        // Get all actors with tag
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(),   ATerrainMarker::StaticClass(), TerrainMarkers);
+		
+		if(TerrainMarkers.Num())	   
+		{
+			ATerrainMarker * terrainMarker = (ATerrainMarker *) TerrainMarkers[0];
+
+			FVector InLocation = terrainMarker->GetActorLocation();
+        	float InRadius =terrainMarker->radius;
+
+			provider_SphereTerrain->markerPosition= Vect3(InLocation.X, InLocation.Y, InLocation.Z);
+			provider_SphereTerrain->markerRadius = InRadius;
+			provider_SphereTerrain->markerTolerance = 1.0;
+			provider_SphereTerrain->markerScale = Vect3(10.0f,10.0f,10.0f);
+			provider_SphereTerrain->bUseMarker = true;
+		}
+	}
+
+
 	// test initialize
 	component_RMC->Initialize(provider_SphereTerrain);					
 	

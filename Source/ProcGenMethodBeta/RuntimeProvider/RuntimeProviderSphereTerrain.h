@@ -24,7 +24,7 @@
 class URuntimeMeshModifier;
 class URuntimeMeshModifierNormals;
 
-#define MAXOCTREENODEDEPTH 3
+#define MAXOCTREENODEDEPTH 4 // Works with higher depth but longer rendering time
 
 // Class
 UCLASS()
@@ -109,6 +109,12 @@ public:
 		 rootOctreeNode.GetAllNodesAtDepth(depth,  OutputNodesList);
 
 	}
+
+	bool bUseMarker = false;
+	Vect3 markerPosition;
+	float markerRadius;
+	float markerTolerance;
+	Vect3 markerScale;
 
 protected:
 	// Initialize

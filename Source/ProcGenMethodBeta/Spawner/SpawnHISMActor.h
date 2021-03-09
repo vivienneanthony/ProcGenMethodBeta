@@ -8,6 +8,7 @@
  
 #include "../Structures/TraceCall.h"
 #include "../Structures/PopulateAsset.h"
+#include "../Structures/HISMQueueLogItem.h"
 
 #include "../Enums/PopulateTypes.h"
 #include "../Enums/WorldTrace.h"
@@ -19,7 +20,12 @@
 #include "Engine/Classes/Components/StaticMeshComponent.h"
 #include "Engine/Classes/Components/InstancedStaticMeshComponent.h"
 #include "Engine/Classes/Components/HierarchicalInstancedStaticMeshComponent.h"
- 
+
+#include "Kismet/KismetMathLibrary.h"
+
+// Fast Noise Wrapper
+#include "FastNoiseWrapper.h"
+
 #include "SpawnHISMActor.generated.h"
  
 UCLASS()
@@ -56,6 +62,10 @@ public:
     UPROPERTY(BlueprintReadWrite, Category="Debug")
     bool showDebug = false;
 
+	// Noise - Density Wrapper
+	UPROPERTY(BlueprintReadWrite)	
+	UFastNoiseWrapper * densityNoiseWrapper;	
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;	
@@ -74,11 +84,21 @@ protected:
  
 	//  Do Trace
 	void TraceDone(const FTraceHandle& TraceHandle, FTraceDatum & TraceData);	
- 
+
+	bool ChooseGenerate(FVector Location);
+
     // Method to force a scan twice
     bool WaitiingForResponse = false;
 
 	int32 selectHISM = 0;
+
+	// log items
+	TQueue<FHISMQueueLogItem> generatedHISMs;
+
+	uint64 hismCount;
+
+	uint32 hismLimit = 1000;
+
 
 public:	
 	// Called every frame
@@ -88,13 +108,13 @@ public:
 	virtual void EndPlay(EEndPlayReason::Type endplayReason) override;
   
 	// Thread Safe
-	TQueue<FTraceCall> TraceCallQueue;
+	TQueue<FTraceCall> TraceCallQueue;	
 
     // Cache newTransform
     FTransform newTransform;
 
-	
-
+	// Allows quicker production
+	FRotator MyRotator;
  
 };
  

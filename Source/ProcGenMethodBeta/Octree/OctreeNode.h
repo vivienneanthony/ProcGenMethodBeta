@@ -72,4 +72,6 @@ public:
     bool VectorInNode(Vect3 point, float boundradius, float tolerance);   // Vector in Node
 
     bool VectorInNodeInScale(Vect3 point, float boundradius, float tolerance, Vect3 inScale);   // Vector in Node
+
+    void BuildTreeArea(unsigned int indepth, Vect3 inPoint, float inRadius, float inTolerance, Vect3 inActorScale);
 };

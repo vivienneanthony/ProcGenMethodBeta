@@ -2,16 +2,18 @@
  
  
 // Sets default values
-FSpawnHISMThread::FSpawnHISMThread(EWorldTrace traceType, ASpawnHISMActor * callingActor)
+FSpawnHISMThread::FSpawnHISMThread(EPopulateTypes inPopulateType, EWorldTrace traceType, ASpawnHISMActor * callingActor)
 {
  	// Is Valid
 	if(IsValid(callingActor))
 	{
 		currentTraceType = traceType;
 		currentThreadActor = callingActor;
- 
+		currentPopulateType = inPopulateType;
+
 		// Parameters
 		collisionParams.bTraceComplex=true;	   			
+				
 	}
 }
  
@@ -20,7 +22,7 @@ FSpawnHISMThread::FSpawnHISMThread(EWorldTrace traceType, ASpawnHISMActor * call
 bool FSpawnHISMThread::Init()
 {
 	bStopThread = false;
- 
+ 	
 	return true;
 }
  
@@ -44,16 +46,41 @@ uint32 FSpawnHISMThread::Run()
  
  	return 0;
 }
- 
+
+
 // Choose a coordinate
 FVector FSpawnHISMThread::ChooseACoordinate()
 {	
 	// Get actor world transform
 	FVector worldLocation = currentThreadActor -> playerTransform.GetLocation();
- 
-	worldLocation.X+=FMath::RandRange((float)-1000, (float)1000);
-	worldLocation.Y+=FMath::RandRange((float)-1000, (float)1000);
- 
+	FRotator worldRotator= currentThreadActor -> playerTransform.Rotator();
+
+	// grass
+	switch(currentPopulateType)
+	{
+		case (EPopulateTypes::PopulateType_LandscapeGrass):
+			// random spot			
+			worldLocation.X+=FMath::RandRange((float)-512, (float)512);
+			worldLocation.Y+=FMath::RandRange((float)-512, (float)512); 			
+			break;		
+		case (EPopulateTypes::PopulateType_LandscapeFoilage):
+			worldLocation.X+=FMath::RandRange((float)-4000, (float)4000);
+			worldLocation.Y+=FMath::RandRange((float)-4000, (float)4000); 
+			break;
+		case (EPopulateTypes::PopulateType_LandscapeRock):
+			worldLocation.X+=FMath::RandRange((float)-4000, (float)4000);
+			worldLocation.Y+=FMath::RandRange((float)-4000, (float)4000); 
+			break;
+		case (EPopulateTypes::PopulateType_LandscapeFauna):
+			worldLocation.X+=FMath::RandRange((float)-4000, (float)4000);
+			worldLocation.Y+=FMath::RandRange((float)-4000, (float)4000); 
+			break;
+		case (EPopulateTypes::PopulateType_Structure):
+			worldLocation.X+=FMath::RandRange((float)-4000, (float)4000);
+			worldLocation.Y+=FMath::RandRange((float)-4000, (float)4000); 
+			break;
+	}	
+
 	return worldLocation;
 }
  
@@ -69,9 +96,9 @@ void FSpawnHISMThread::AsyncTraceCollisionToPoint()
 	// start and end
 	OutTraceCall.Start = Start;
 	OutTraceCall.End = End;
-   
+	OutTraceCall.Scale = 1.0f;
+
     currentThreadActor->TraceCallQueue.Enqueue(OutTraceCall);
 
 	return;
 }
- 

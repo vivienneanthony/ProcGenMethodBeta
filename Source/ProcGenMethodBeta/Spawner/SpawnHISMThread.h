@@ -7,12 +7,15 @@
 #include "../Structures/TraceCall.h"
 
 #include "../Enums/WorldTrace.h"
+#include "../Enums/PopulateTypes.h"
 
 #include "Engine/Classes/Components/StaticMeshComponent.h"
 #include "Engine/Classes/Components/InstancedStaticMeshComponent.h"
 #include "Engine/Classes/Components/HierarchicalInstancedStaticMeshComponent.h"
 
 #include "Core/Public/HAL/Runnable.h"
+
+#include "UObject/Object.h"
 
 // include draw debug helpers header file
 #include "DrawDebugHelpers.h"
@@ -25,7 +28,7 @@ class ASpawnHISMActor;
 class PROCGENMETHODBETA_API FSpawnHISMThread : public FRunnable
 {
 	public:
-	FSpawnHISMThread(EWorldTrace traceType, ASpawnHISMActor * callingActor);
+	FSpawnHISMThread(EPopulateTypes inPopulateType, EWorldTrace traceType, ASpawnHISMActor * callingActor);
 
 	bool bStopThread;
 
@@ -72,4 +75,6 @@ private:
 
 	// Out Trace Call
 	FTraceCall OutTraceCall;
+
+	EPopulateTypes	currentPopulateType;
 };

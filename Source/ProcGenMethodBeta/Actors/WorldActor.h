@@ -12,6 +12,8 @@
 #include "FastNoiseWrapper.h"
 
 #include "../Structures/MeshMarchingCubeParameters.h"
+#include "../Structures/HISMQueueLogItem.h"
+
 
 #include "../RuntimeProvider/RuntimeProviderSphereTerrain.h"
 
@@ -99,6 +101,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	URuntimeMeshComponent * component_RMC = nullptr;
 	
+	// RuntimeMeshComponent
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bUseTerrainMarker;
+		
 	// Scene Component
 	UPROPERTY()	
 	USceneComponent * component_Scene = nullptr;
@@ -125,6 +131,7 @@ public:
 	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -134,6 +141,8 @@ protected:
 
 	// Sphere Terrain
 	void OnConstructionSphereTerrainProvider();
+
+	TQueue<FHISMQueueLogItem> generatedHISMs;
 		
 public:
 	// Called every frame

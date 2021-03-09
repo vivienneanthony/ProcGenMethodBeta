@@ -14,4 +14,5 @@ struct FTraceCall
 public:
     FVector Start;
     FVector End;
+    float Scale;
 };

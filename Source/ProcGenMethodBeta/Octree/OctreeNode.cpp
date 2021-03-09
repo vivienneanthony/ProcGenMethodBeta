@@ -41,6 +41,7 @@ OctreeNode::~OctreeNode()
     }
 }
 
+
 void OctreeNode::BuildTree(unsigned int indepth)
 {
     // this says a node is not created yet
@@ -75,6 +76,50 @@ void OctreeNode::BuildTree(unsigned int indepth)
 
             // Build Treee
             Node[i]->BuildTree(indepth);
+        }
+
+        hasChildren = true;
+    }
+
+    treeReady = true;
+
+    return;
+}
+
+
+void OctreeNode::BuildTreeArea(unsigned int indepth, Vect3 inPoint, float inRadius, float inTolerance, Vect3 inActorScale)
+{
+    // this says a node is not created yet
+    if (treeReady == false)
+    {
+        // if reached maxmimum depth close
+        if (depth > indepth || depth > LODDEPTH || VectorInNodeInScale(inPoint, inRadius, inTolerance, inActorScale) ==false) 
+        {
+            // set the maximum so set this node to ready
+            hasChildren = false;
+            treeReady = true;
+
+            return;
+        }
+        
+        // loop through each
+        for (unsigned i = 0; i < OCTANTS; i++)
+        {
+            // Octant quadrant
+            Node[i] = new OctreeNode();
+
+            // Populate node data
+            Node[i]->Parent = this;
+            Node[i]->depth = (depth + 1);
+
+            // Calculate Bounds
+            Node[i]->CalculateBounds((Octant)(1 << i));
+
+            // Activate this octant
+            //States::activateIndex(&activeOctants, i);
+
+            // Build Treee
+            Node[i]->BuildTreeArea(indepth, inPoint, inRadius, inTolerance, inActorScale);
         }
 
         hasChildren = true;
