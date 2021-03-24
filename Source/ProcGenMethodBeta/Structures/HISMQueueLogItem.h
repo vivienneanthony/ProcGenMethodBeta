@@ -3,6 +3,7 @@
 // ProcGenMethodBeta Plugin
 // Developer Vivienne Anthony
 // Copyright (c) 2021 
+#include "CoreMinimal.h"
 
 #include "HISMQueueLogItem.generated.h"
 

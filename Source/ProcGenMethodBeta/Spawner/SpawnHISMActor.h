@@ -59,12 +59,37 @@ public:
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category ="Play Info (ReadOnly)")
     FTransform playerTransform;
 
+ 	UPROPERTY(BlueprintReadWrite, Category="Debug")
+    bool enablePoisson = false;
+
     UPROPERTY(BlueprintReadWrite, Category="Debug")
     bool showDebug = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	EFastNoise_NoiseType noiseTypeTerrain = EFastNoise_NoiseType::Simplex;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	EFastNoise_FractalType fractalTypeTerrain = EFastNoise_FractalType::RigidMulti;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	int32 noiseOctavesTerrain = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	float noiseFrequencyTerrain = 0.001f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	float noiseCutoffTerrain = 0.2f;
 
 	// Noise - Density Wrapper
 	UPROPERTY(BlueprintReadWrite)	
 	UFastNoiseWrapper * densityNoiseWrapper;	
+
+	// Noise - Density Wrapper
+	UPROPERTY(BlueprintReadWrite)	
+	UFastNoiseWrapper * fastNoiseWrapperTerrain;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise Settings")
+	int32 seed;
 
 protected:
 	// Called when the game starts or when spawned
@@ -99,6 +124,9 @@ protected:
 
 	uint32 hismLimit = 1000;
 
+	FVector currentActorLocation;
+	
+	FVector previousActorLocation;
 
 public:	
 	// Called every frame
@@ -110,11 +138,29 @@ public:
 	// Thread Safe
 	TQueue<FTraceCall> TraceCallQueue;	
 
+	// Locaition HISM
+	TMap<FVector,FHISMQueueLogItem> HISMLocations;
+
     // Cache newTransform
     FTransform newTransform;
 
 	// Allows quicker production
 	FRotator MyRotator;
+
+	// check in bound
+	bool CheckInBound(FVector inVector);
+
+	// Trigger
+	TQueue<bool> ResetTrigger;
+
+	float accumalatedTime;
+
+	// cache
+	FVector Max;
+	FVector Min;
+	FVector ActorLocation;
+
+	bool  trigger;
  
 };
  

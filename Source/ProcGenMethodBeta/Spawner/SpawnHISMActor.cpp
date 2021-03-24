@@ -13,6 +13,9 @@ ASpawnHISMActor::ASpawnHISMActor()
 
 	// Create density wrapper
 	densityNoiseWrapper = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapper"));		
+
+	// Create density wrapper
+	fastNoiseWrapperTerrain = CreateDefaultSubobject<UFastNoiseWrapper>(TEXT("FastNoiseWrapperTerrain"));		
 }
 
 // Called when the game starts or when spawned
@@ -27,11 +30,24 @@ void ASpawnHISMActor::BeginPlay()
 	// Set up fast noise
 	densityNoiseWrapper->SetupFastNoise();
 
+	 // Setup second noise
+    fastNoiseWrapperTerrain->SetNoiseType(noiseTypeTerrain);
+    fastNoiseWrapperTerrain->SetFractalType(fractalTypeTerrain);
+    fastNoiseWrapperTerrain->SetFrequency(noiseFrequencyTerrain);
+    fastNoiseWrapperTerrain->SetOctaves(noiseOctavesTerrain);
+
 	// Set paramenters
 	collisionParams.bReturnFaceIndex = false;
 	collisionParams.bReturnPhysicalMaterial = true;
 	collisionParams.bTraceComplex = true;
 
+	// show
+	showDebug = true;
+
+	// Get Location
+	previousActorLocation = playerPawn -> GetActorLocation();
+
+	// Call Super Begin
 	Super::BeginPlay();	
 }
 
@@ -42,39 +58,35 @@ void ASpawnHISMActor::Tick(float DeltaTime)
     if(IsValid(playerPawn))
     {
         playerTransform = playerPawn -> GetTransform();    
-    }
+    }	   
 
 	Super::Tick(DeltaTime);
 
-	if(IsValid(playerPawn))
-	{
-		if(!generatedHISMs.IsEmpty())
-		{
-			// get from tail
-			FHISMQueueLogItem * peekedQueueHISMItem = generatedHISMs.Peek();
-
-			// him
-			if( UKismetMathLibrary::Abs(FVector::Dist(peekedQueueHISMItem->Location, playerTransform.GetLocation()) )>100)		
-			{
-				//UE_LOG(LogTemp, Warning, "Deleting instance from %f"), returnvalue);
-
-				// pop
-				HISMArray[peekedQueueHISMItem->SelectedHISM]->RemoveInstance(peekedQueueHISMItem->InstanceID);
-
-				// pop
-				generatedHISMs.Pop();
-
-				hismCount--;			
-			}
-		}
-
-	}
-
-    // If not waiting for a responsedo another trace
+	 // If not waiting for a responsedo another trace
     if(!WaitiingForResponse)
     {
+		// Do Trace
         DoTrace();
     }
+
+	accumalatedTime+=DeltaTime;
+
+	if(accumalatedTime>5.0f)
+	{
+		trigger = true;
+
+		// Get current location
+		currentActorLocation = playerPawn -> GetActorLocation();
+
+		if(FVector::DistSquared(currentActorLocation, previousActorLocation)>500.0f)
+		{
+			previousActorLocation = currentActorLocation;
+
+			ResetTrigger.Enqueue(trigger);		
+		}
+
+		accumalatedTime = 0.0f;
+	}
 }
 
 // End Play
@@ -109,7 +121,7 @@ void ASpawnHISMActor::Initialize()
 	if(HISMArray.Num())
 	{
 		// Create new thread
-		workerThread = new FSpawnHISMThread(PopulateType, EWorldTrace::WorldTrace_FlatWorld, this);
+		workerThread = new FSpawnHISMThread(PopulateType, seed, enablePoisson, EWorldTrace::WorldTrace_FlatWorld, this);
 
 		// Add to container
 		CurrentRunning_workerThread =  FRunnableThread::Create(workerThread, TEXT("WorkerThread"));
@@ -127,15 +139,10 @@ void ASpawnHISMActor::DoTrace()
 	if(TraceCallQueue.IsEmpty())
     {
         WaitiingForResponse = false;
-
+		
 		return;
     }
 		
-	if(hismCount>hismLimit)
-	{
-		return;
-	}
-
 	// Create trace call
 	FTraceCall inTraceCall;
 
@@ -144,7 +151,7 @@ void ASpawnHISMActor::DoTrace()
 
 	// Get World
 	UWorld * thisWorld = GetWorld();
-
+	
 	// Log
 	if(IsValid(thisWorld))
 	{
@@ -154,18 +161,19 @@ void ASpawnHISMActor::DoTrace()
 		// if count is more then 0
         if(showDebug)
         {
-		    DrawDebugLine(thisWorld, inTraceCall.Start, inTraceCall.End, FColor::Green, false, 1, 0, 1);
+		    DrawDebugLine(thisWorld,inTraceCall.Start*4,inTraceCall.End, FColor::Green, false, 1, 0, 2);
         }
 
-		// This should do the trace call
-		thisWorld->AsyncLineTraceByChannel(EAsyncTraceType::Single, inTraceCall.Start, inTraceCall.End, ECC_Visibility, collisionParams,
+		// Do async trace
+		thisWorld->AsyncLineTraceByChannel(EAsyncTraceType::Single, inTraceCall.Start*4, inTraceCall.End, ECC_Visibility, collisionParams,
                                     FCollisionResponseParams::DefaultResponseParam, &TraceDelegate);
 	}
 }
 
 // trace
 void ASpawnHISMActor::TraceDone(const FTraceHandle& TraceHandle, FTraceDatum & TraceData)
-{
+{	
+	
 	// Get first results
 	if(TraceData.OutHits.Num() > 0)
     {
@@ -178,45 +186,58 @@ void ASpawnHISMActor::TraceDone(const FTraceHandle& TraceHandle, FTraceDatum & T
             UE_LOG(LogTemp, Warning, TEXT("OutHit"));
         }
 
-	   // only if object has terrain
-	   if(hitResults.Actor->ActorHasTag("Terrain")&&ChooseGenerate(hitResults.Location))
-	   {		
-		   	   				   
-        		// Get results and changesize scale to match
-        		newTransform.SetLocation(hitResults.Location);
+	   if(CheckInBound(hitResults.Location)==false)
+	   {
+		// Do nothing - Skip
+	   }
+	   else 
+	   {	
+		   if(hitResults.Actor->ActorHasTag("Terrain"))
+		   {	
+				// prevent double results
+				if(!HISMLocations.Contains(hitResults.Location))
+				{
+					// Get results and changesize scale to match
+					newTransform.SetLocation(hitResults.ImpactPoint);
 
-				// make a new rotator
-				MyRotator = FRotationMatrix::MakeFromZ(hitResults.ImpactNormal).Rotator();
+					// make a new rotator
+					MyRotator = FRotationMatrix::MakeFromZ(hitResults.ImpactNormal).Rotator();
+		
+					// Set ritatib
+					newTransform.SetRotation(FQuat(MyRotator));
 
+					// Async Spawn - Prevent Creation on span - Right now selects the first one but can be change to multiple
+					selectHISM=FMath::RandRange(0, HISMArray.Num()-1);
+
+					int32 InstanceID = HISMArray[selectHISM]->AddInstanceWorldSpace(newTransform);						
+
+					// add
+					FHISMQueueLogItem itemadded;
 			
-				// Set ritatib
-				newTransform.SetRotation(FQuat(MyRotator));
+					itemadded.SelectedHISM = selectHISM;
+					itemadded.Location = hitResults.Location;
+					itemadded.InstanceID = InstanceID;
 
-        		// Async Spawn - Prevent Creation on span - Right now selects the first one but can be change to multiple
-				selectHISM=FMath::RandRange(0, HISMArray.Num()-1);
+					// add			
+					HISMLocations.Add(hitResults.Location, itemadded);
 
-        		int32 InstanceID = HISMArray[selectHISM]->AddInstanceWorldSpace(newTransform);						
-
-				// add
-				FHISMQueueLogItem itemadded;
-				
-				itemadded.SelectedHISM = selectHISM;
-				itemadded.Location = hitResults.Location;
-				itemadded.InstanceID = InstanceID;
-
-				// added
-				generatedHISMs.Enqueue(itemadded);
-
-				// add count
-				hismCount++;
+					// add count
+					hismCount++;
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning,TEXT("Rejected"));
+				}
+		   }
 	   }        
-    }else
+    }
+	else
     {
-        // Show a non hit
+		// Log a hit
         if(showDebug)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("NonHit"));
-        }
+        {     	
+			UE_LOG(LogTemp, Warning, TEXT("NonHit"));
+		}        
     }
     
     WaitiingForResponse = false;
@@ -228,20 +249,41 @@ void ASpawnHISMActor::TraceDone(const FTraceHandle& TraceHandle, FTraceDatum & T
 
 bool ASpawnHISMActor::ChooseGenerate(FVector Location)
 {
-	bool returnstate = false;
+	bool returnstate = true;
 
-	float density = densityNoiseWrapper->GetNoise3D(Location.X, Location.Y, Location.Z);
-	
-	// get results make sure range is 0 to 1 for density
-    density = UKismetMathLibrary::MapRangeClamped(density,-1.0f, 1.0f, 0.0f, 1.0f);
-
-	if(density>0.5)
-	{
-		returnstate = true;
-	}else
-	{
-		returnstate = false;
-	}
+	// Used density to show a area 
+	// Probably can be put into the thread itself
 
 	return returnstate;
+}
+
+
+
+  
+bool ASpawnHISMActor::CheckInBound(FVector inVector)
+{
+	if(IsValid(playerPawn))
+	{
+		ActorLocation = playerPawn->GetActorLocation();
+
+    	// Should check boundary
+    	Min = ActorLocation - FVector(4000.0f, 4000.0f, 4000.0f);
+    	Max = ActorLocation + FVector(4000.0f, 4000.0f, 4000.0f);
+
+    	// In Accurate
+    	if((inVector.X>Min.X)&&(inVector.Y>Min.Y)&&(inVector.Z>Min.Z)&&(inVector.X<Max.X)&&(inVector.Y<Max.Y)&&(inVector.Z<Max.Z))
+    	{
+        	return true;
+	    }
+	    else
+    	{
+        	return false;
+	    }
+	}
+	else
+	{
+		return false;
+	}
+
+	return false;
 }

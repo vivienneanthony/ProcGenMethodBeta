@@ -6,6 +6,8 @@
 
 #include "../Structures/TraceCall.h"
 
+#include "../Poisson/PoissonSampler.h"
+
 #include "../Enums/WorldTrace.h"
 #include "../Enums/PopulateTypes.h"
 
@@ -20,6 +22,8 @@
 // include draw debug helpers header file
 #include "DrawDebugHelpers.h"
 
+#include "../Formulas/SpawnPointsSphere.h"
+
 // Forward
 class FRunnableThread;
 class ASpawnHISMActor;
@@ -28,7 +32,7 @@ class ASpawnHISMActor;
 class PROCGENMETHODBETA_API FSpawnHISMThread : public FRunnable
 {
 	public:
-	FSpawnHISMThread(EPopulateTypes inPopulateType, EWorldTrace traceType, ASpawnHISMActor * callingActor);
+	FSpawnHISMThread(EPopulateTypes inPopulateType, int32 inSeed, bool inbEnablePoisson, EWorldTrace traceType, ASpawnHISMActor * callingActor);
 
 	bool bStopThread;
 
@@ -67,14 +71,40 @@ private:
 	// Choose a coordinate
 	FVector ChooseACoordinate();	
 
-	// Save Start Trace
-	FVector Start;
-
-	// Save End Trace
-	FVector End;
-
 	// Out Trace Call
 	FTraceCall OutTraceCall;
 
+	// Current PopulateType
 	EPopulateTypes	currentPopulateType;
+
+	// Parson
+	PoissonSampler poissonSampler;
+
+	// enable poisson calculation
+	bool bEnabledPoisson;
+
+	// Keep points in thread
+	TQueue<FVector> VectorPoints;
+
+	void PoissonBasedOutput();
+
+	int32 idx;
+
+	int32 currentSeed;
+
+
+	bool bPoissonGenerated = false;
+
+		
+	bool bPoissonGenerating = false;
+
+	float SetRadius = 15000.0f;
+	
+	float SetInterations = 30.0f;
+	
+	float SetMinimumDistance = 5000.0f;
+
+	SpawnPointsSphere	spawnPoints;
+
+	uint32 MaximumCount = 0.0f;
 };

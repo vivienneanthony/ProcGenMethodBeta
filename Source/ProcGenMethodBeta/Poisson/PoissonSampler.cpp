@@ -3,15 +3,16 @@
 #include <cmath>
 
 #define DefaultPointsPerIteration 30
+#define DefaultInRadius       1000
 
 TArray<FVector> PoissonSampler::SampleSphere(int32 inSeed,FVector inCenter, float inRadius, float inMinimumDistance)
 {
 
     // call Sample with Default
-    return SampleSphere(inSeed, inCenter, inRadius, inMinimumDistance, DefaultPointsPerIteration);
+    return SampleSphere(inSeed, inCenter, inRadius, inMinimumDistance, DefaultPointsPerIteration, DefaultInRadius);
 }
 
-TArray<FVector> PoissonSampler::SampleSphere(int32 inSeed,FVector inCenter, float inRadius, float inMinimumDistance, int32 inPointsPerIteration)
+TArray<FVector> PoissonSampler::SampleSphere(int32 inSeed,FVector inCenter, float inRadius, float inMinimumDistance, int32 inPointsPerIteration, float inSphereRadius)
 {
 
     // Create boundary area
@@ -19,12 +20,13 @@ TArray<FVector> PoissonSampler::SampleSphere(int32 inSeed,FVector inCenter, floa
     FVector outLowerRight  =  inCenter + FVector(inRadius, inRadius, inRadius);
 
     // Call Sample
-    return Sample(inSeed, outTopLeft, outLowerRight, inMinimumDistance, 0.0f, inPointsPerIteration);
+    return Sample(inSeed, outTopLeft, outLowerRight, inMinimumDistance, 0.0f, inPointsPerIteration, inRadius);
 }
 
 
+		
 TArray<FVector> PoissonSampler::Sample(int32 seed, FVector inTopLeft, FVector inLowerRight, float inMinimumDistance,
-                            float inRejectionDistance,  int32 inPointsPerIteration) {
+                            float inRejectionDistance,  int32 inPointsPerIteration, float inSphereRadius) {
   // new settings
   PoissonSettings poissonSettings;
 
@@ -34,6 +36,7 @@ TArray<FVector> PoissonSampler::Sample(int32 seed, FVector inTopLeft, FVector in
   poissonSettings.Center = (inTopLeft + inLowerRight) / 2;
   poissonSettings.CellSize = inMinimumDistance / (std::sqrt(2));
   poissonSettings.MinimumDistance = inMinimumDistance;
+  poissonSettings.Seed = seed;
   
   // RejectionSqDistance = rejectionDistance == null ? null : rejectionDistance * rejectionDistance
   if(inRejectionDistance!=0.0f)
@@ -54,6 +57,10 @@ TArray<FVector> PoissonSampler::Sample(int32 seed, FVector inTopLeft, FVector in
 
 
 
+
+  // random stream
+  FRandomStream randomStream(poissonSettings.Seed);
+
   // state
   State state;
 
@@ -61,7 +68,7 @@ TArray<FVector> PoissonSampler::Sample(int32 seed, FVector inTopLeft, FVector in
   state.Grid.SetNum(poissonSettings.GridWidth*poissonSettings.GridLength*poissonSettings.GridHeight);
 
   // Add first point
-  AddFirstPoint(poissonSettings, state);
+  AddFirstPoint(poissonSettings, state, randomStream);
 
   // if active points are still available count
   while (state.ActivePoints.Num()) 
@@ -77,35 +84,55 @@ TArray<FVector> PoissonSampler::Sample(int32 seed, FVector inTopLeft, FVector in
 
     // loop through iteration
     for (int32 k = 0; k <  inPointsPerIteration; k++)
-      found |= AddNextPoint(point,  poissonSettings, state);
+      found |= AddNextPoint(point,  poissonSettings, state, randomStream);
 
     if (!found)
       state.ActivePoints.RemoveAt(listIndex);
+
+    FPlatformProcess::Sleep(0.01);
+  }
+
+  int32 i=0;
+
+  // cheat does a rotation
+  for(auto Point : state.Points)
+  {
+    //Just get the rotation  
+    FRotator rotation = Point.Rotation();
+
+  // that should be the length
+    FVector trythis = rotation.RotateVector(FVector(inSphereRadius, 0.0f, 0.0f));
+
+    state.Points[i]=trythis;
+
+    i++;
+
+     FPlatformProcess::Sleep(0.01);
   }
 
   return state.Points;
 }
 
 // I think matches - Add first point
-void PoissonSampler::AddFirstPoint(PoissonSettings inSettings, State &inState) 
+void PoissonSampler::AddFirstPoint(PoissonSettings inSettings, State &inState, FRandomStream & randomStream) 
 {
   // do added to certain points
   bool added = false;
 
   while (!added) {
     // Select a spot
-    float randFloat = RandomFloatFromRandomStream();
+    float randFloat = RandomFloatFromRandomStream(randomStream);
     float xR = inSettings.TopLeft.X + (inSettings.Dimensions.X * randFloat);
 
-    randFloat = RandomFloatFromRandomStream();
+    randFloat = RandomFloatFromRandomStream(randomStream);
     float yR = inSettings.TopLeft.Y + (inSettings.Dimensions.Y * randFloat);
 
-    randFloat = RandomFloatFromRandomStream();
+    randFloat = RandomFloatFromRandomStream(randomStream);
     float zR = inSettings.TopLeft.Z + (inSettings.Dimensions.Z * randFloat);
 
     // create a point
     FVector point = FVector(xR, yR, zR);
-
+        
     // check if distance square between points
     if ((inSettings.RejectionSqDistance != 0.0f) && (FVector::DistSquared(inSettings.Center, point) > inSettings.RejectionSqDistance))
     {
@@ -118,21 +145,23 @@ void PoissonSampler::AddFirstPoint(PoissonSettings inSettings, State &inState)
     // continue if added
     FVector index = Denormalize(point, inSettings.TopLeft, inSettings.CellSize);
 
-    // use index values;
+      // use index values;
     inState.Grid[CalculateIndex(inSettings, (int32) index.X,  (int32) index.Y, (int32) index.Z)] = point;
-
+  
     // add points
     inState.ActivePoints.Add(point);
     inState.Points.Add(point);
   }
+
+   
 }
 
 
 // I think match
 bool PoissonSampler::AddNextPoint(FVector inPoint, PoissonSettings inSettings,
-                                   State & state) {
+                                   State & state, FRandomStream & randomStream) {
   bool found = false;
-  FVector q = GenerateRandomAround(inPoint, inSettings.MinimumDistance);
+  FVector q = GenerateRandomAround(inPoint, inSettings.MinimumDistance, randomStream);
 
   // if point in topleft and lower right and notrejected by rejection or distance from centerr and point is less then
   // rejection distance  = get a index
@@ -186,18 +215,18 @@ bool PoissonSampler::AddNextPoint(FVector inPoint, PoissonSettings inSettings,
 }
 
 // Matches I think
-float PoissonSampler::RandomFloatFromRandomStream() {
+float PoissonSampler::RandomFloatFromRandomStream(FRandomStream & randomStream) {
   return randomStream.GetFraction();
 }
 
 // this match up - I think
 FVector PoissonSampler::GenerateRandomAround(FVector inCenter,
-                                                   float inMinimumDistance)
+                                                   float inMinimumDistance, FRandomStream & randomStream)
 {
   // choose amount of rotation
-  float rd1 = RandomFloatFromRandomStream();
-  float rd2 = RandomFloatFromRandomStream();
-  float rd3 = RandomFloatFromRandomStream();
+  float rd1 = RandomFloatFromRandomStream(randomStream);
+  float rd2 = RandomFloatFromRandomStream(randomStream);
+  float rd3 = RandomFloatFromRandomStream(randomStream);
 
   // mindset  to 2
   float radius = inMinimumDistance * (rd1 + 1.0f);
@@ -212,9 +241,10 @@ FVector PoissonSampler::GenerateRandomAround(FVector inCenter,
   float newY = radius * FGenericPlatformMath::Sin(angle1) * FGenericPlatformMath::Sin(angle2);
   float newZ = radius * FGenericPlatformMath::Cos(angle2);
 
-  return FVector((float)(inCenter.X + newX),
-                           (float)(inCenter.Y + newY), 
-                           (float)(inCenter.Z + newZ));
+  // Create a randomPoint
+  FVector randomPoint =  FVector((float)(inCenter.X + newX), (float)(inCenter.Y + newY), (float)(inCenter.Z + newZ));
+  
+  return randomPoint;
 }
 
 // matches up - I think
@@ -230,4 +260,33 @@ int32 PoissonSampler::CalculateIndex(PoissonSettings inSettings, int32 i,
 
   return i + (j * inSettings.GridWidth) +
          (k * (inSettings.GridWidth * inSettings.GridLength));
+}
+
+
+// do it in thesample
+void PoissonSampler::ConvertXYZToSpherical(FVector &inVector, float radius)
+{
+  // make the point a extra data
+  FVector inP = FVector(inVector.X, inVector.Y, inVector.Z);
+
+  // This is the p symbol trigonoemtory
+  //flaot pRadius = (inVector.X*inVector.X)+(inVector.Y*inVector.Y)+(inVector.Z*inVector.Z);
+
+  // double radius
+  //pRadius*=2.0f;
+
+  // this should get the tangent
+  //float tangent = inVector.Y/inVector.X;
+
+  // this should get the arccos 
+  //float acos = FGenericPlatformMath::Acos(inVector.Z/( (inVector.X*inVector.X)+(inVector.Y*inVector.Y)+(inVector.Z*inVector.Z)));
+
+  //Just get the rotation  
+  //FRotator rotation = inP.Rotation();
+
+  // that should be the length
+  //FVector trythis = rotation.RotateVector(FVector(radius, 0.0f, 0.0f));
+  
+  // create point
+  // inVector = trythis;
 }

@@ -19,7 +19,7 @@ void ASpawnPoissonSamplerActor::BeginPlay()
 	FVector location = GetActorLocation();
 
 	// Test if array is built
-	TArray<FVector>  results = sampler.SampleSphere(seed, location, radius, minimumDistance, iterate);
+	TArray<FVector>  results = sampler.SampleSphere(seed, location, radius, minimumDistance, iterate, 15000.0f);
 
 	// Output
 	UE_LOG(LogTemp, Warning, TEXT("Produced %d"), results.Num());
