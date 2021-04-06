@@ -92,7 +92,6 @@ private:
 
 	int32 currentSeed;
 
-
 	bool bPoissonGenerated = false;
 
 		
@@ -107,4 +106,13 @@ private:
 	SpawnPointsSphere	spawnPoints;
 
 	uint32 MaximumCount = 0.0f;
+
+
+	// Get actor location
+	FVector currentLocation;
+	FVector4 newPoint;
+	FVector Start;
+	FVector End;
+
+	
 };

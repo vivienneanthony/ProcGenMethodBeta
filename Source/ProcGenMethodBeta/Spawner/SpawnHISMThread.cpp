@@ -185,26 +185,29 @@ void FSpawnHISMThread::AsyncTraceCollisionToPoint()
 void FSpawnHISMThread::PoissonBasedOutput()
 {    
 	// Get actor location
-	FVector currentLocation = currentThreadActor->GetActorLocation();
+	//FVector currentLocation = currentThreadActor->GetActorLocation();
 	
 	// Set location
-	spawnPoints.SetActorLocation(currentLocation);
+	//spawnPoints.SetActorLocation(currentLocation);
 	
 	// Get new point
-	FVector newPoint = spawnPoints.GetNextPoint();
+	newPoint = spawnPoints.GetNextPoint();
 
 	// if new point is not zero
 	if(newPoint!=FVector(0.0f,0.0f,0.0f))
 	{
 		//  Choose a coordinate - Use spawn point
-		FVector Start = newPoint;
+		//FVector Start = newPoint;
+		Start = FVector(newPoint.X,newPoint.Y, newPoint.Z);
 	
-		FVector End =  FVector(0.0f,0.0f,0.0f);
+		//FVector End =  FVector(0.0f,0.0f,0.0f);
+		End =  FVector(0.0f,0.0f,0.0f);
 
 		// start and end
 		OutTraceCall.Start = Start;
 		OutTraceCall.End = End;
 		OutTraceCall.Scale = 1.0f;
+		OutTraceCall.Pick = (uint32) newPoint.W;
 
 
 		//UE_LOG(LogTemp, Warning, TEXT("point %s"),*Start.ToString());

@@ -42,27 +42,25 @@ bool SpawnPointsSphere::Initialize(uint32 inSeed, float inRadius, FVector inVect
 }
 
 // Get next point point
-FVector SpawnPointsSphere::GetNextPoint()
-{
-    // outVector
-    FVector outVector;
-
+FVector4 SpawnPointsSphere::GetNextPoint()
+{    
     // test incement
-    if((currentCount+1)>currentCountMax)
-    {
+    // if((currentCount+1)>currentCountMax)
+    // { 
         // blank
-        outVector = FVector(0.0f,0.0f,0.0f);
-    }else
-    {
+    //    outVector = FVector(0.0f,0.0f,0.0f);
+    // }else
+    // { 
         // Get a point
-        FVector point = GetPoint();
+       outVector = GetPoint();
        
         // outVector
-        outVector = point;
+        // outVector = point;
 
-        // Increment
-        currentCount++;           
-    }
+        // // Increment
+        // currentCount++;           
+    //    }
+
     return outVector;
 }
 
@@ -90,24 +88,45 @@ bool SpawnPointsSphere::ResetSeed()
 }
 
 
-FVector SpawnPointsSphere::GetPoint() 
+FVector4 SpawnPointsSphere::GetPoint() 
 {  
-    float u = currentStream.GetFraction();
-    float v = currentStream.GetFraction();
+    //float u = currentStream.GetFraction();
+    //float v = currentStream.GetFraction();
 
-    float theta = 2 * PI * u;
-    float phi =  UKismetMathLibrary::Acos(1 - 2 * v);
+    //float theta = 2 * PI * u;
+    //float phi =  UKismetMathLibrary::Acos(1 - 2 * v);
     
-    float sinTheta =  UKismetMathLibrary::Sin(theta);
-    float cosTheta = UKismetMathLibrary::Cos(theta);
-    float sinPhi = UKismetMathLibrary::Sin(phi);
-    float cosPhi = UKismetMathLibrary::Cos(phi);
+    //float sinTheta =  UKismetMathLibrary::Sin(theta);
+    //float cosTheta = UKismetMathLibrary::Cos(theta);
+    //float sinPhi = UKismetMathLibrary::Sin(phi);
+    //float cosPhi = UKismetMathLibrary::Cos(phi);
 
-    float x1 = sinPhi * cosTheta;
-    float y1 = sinPhi * sinTheta;
-    float z1 = cosPhi;
+    //float x1 = sinPhi * cosTheta;
+    //float y1 = sinPhi * sinTheta;
+    //float z1 = cosPhi;
 
-    return FVector(x1*currentRadius, y1*currentRadius, z1*currentRadius);
+
+    //u = currentStream.GetFraction();
+    //v = currentStream.GetFraction();
+
+    u = currentStream.FRandRange(0.0f, 1.00f);
+    v = currentStream.FRandRange(0.0f, 0.1f);
+
+    theta = 2 * PI * u;
+    phi =  UKismetMathLibrary::Acos(1 - 2 * v);
+    
+    sinTheta =  UKismetMathLibrary::Sin(theta);
+    cosTheta = UKismetMathLibrary::Cos(theta);
+    sinPhi = UKismetMathLibrary::Sin(phi);
+    cosPhi = UKismetMathLibrary::Cos(phi);
+
+    x1 = sinPhi * cosTheta;
+    y1 = sinPhi * sinTheta;
+    z1 = cosPhi;
+
+    uint32 pick = currentStream.RandRange(0,16);
+
+    return FVector4(x1*currentRadius, y1*currentRadius, z1*currentRadius, pick);
 }
 
   

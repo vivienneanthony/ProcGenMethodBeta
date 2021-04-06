@@ -15,4 +15,5 @@ public:
     FVector Start;
     FVector End;
     float Scale;
+    int32 Pick;
 };

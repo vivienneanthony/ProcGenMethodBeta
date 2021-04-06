@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Pawn.h"
 #include "SpawnHISMThread.h"
+#include "SpawnHISMThreadGrass.h"
  
 #include "../Structures/TraceCall.h"
 #include "../Structures/PopulateAsset.h"
@@ -103,12 +104,15 @@ protected:
  
 	// Delegate
 	FTraceDelegate TraceDelegate;
+	FTraceDelegate TraceDelegateGrass;
  
 	// Collision Parameters
 	FCollisionQueryParams collisionParams;
  
 	//  Do Trace
 	void TraceDone(const FTraceHandle& TraceHandle, FTraceDatum & TraceData);	
+	void TraceDoneGrass(const FTraceHandle& TraceHandle, FTraceDatum & TraceData);	
+
 
 	bool ChooseGenerate(FVector Location);
 
@@ -127,6 +131,20 @@ protected:
 	FVector currentActorLocation;
 	
 	FVector previousActorLocation;
+
+	///////////////////
+	///////////////////
+	//
+	////
+	// runnable
+	class FSpawnHISMThreadGrass  * workerThreadGrass = nullptr;
+ 
+	// container
+	FRunnableThread *CurrentRunning_workerThreadGrass = nullptr;
+	
+	///////////////////
+	//
+	///////////////////
 
 public:	
 	// Called every frame
@@ -160,7 +178,33 @@ public:
 	FVector Min;
 	FVector ActorLocation;
 
-	bool  trigger;
- 
+	bool trigger;
+
+
+	FVector inVectorLocation;
+	FVector inLocation;
+
+	float ActorDistance;
+	
+	FVector newLocation;
+
+	// Create trace call
+	FTraceCall inTraceCall;
+
+	FVector NormalizeVector;
+
+	uint32 responsePick;		
+	
+	//////////////////
+	/////////////////
+	//
+	/////////////////
+	/////////////////
+
+
+	// Grass Points
+	TQueue<FVector> GrassPoints;
+	TQueue<FVector> GrassSpawnPoints;
+
 };
  

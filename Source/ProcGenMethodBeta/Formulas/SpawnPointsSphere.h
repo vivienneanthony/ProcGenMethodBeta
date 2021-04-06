@@ -19,13 +19,13 @@ public:
 	bool Initialize(uint32 inSeed, float inRadius, FVector inVectorOrigin, FVector inActionLocation, int32 inCountMax);
 
 	// Get the next point
-	FVector GetNextPoint();
+	FVector4 GetNextPoint();
 
 	// Setters;
 	bool SetActorLocation(FVector inActorLocation);
 
 	// Get Point
-	FVector GetPoint();
+	FVector4 GetPoint();
 
 	// Check In Bound
 	bool CheckInBound(FVector inVector);
@@ -53,9 +53,29 @@ public:
 	//radious
     float currentRadius;
 
+	
+private:
 	// current stream
 	FRandomStream currentStream;
 
 	// current seed
 	uint32 currentSeed;
+
+    float u;
+    float v;
+
+    float theta;
+    float phi;
+    
+    float sinTheta;
+    float cosTheta;
+    float sinPhi;
+    float cosPhi;
+
+    float x1;
+    float y1;
+    float z1;
+
+	FVector outVector;
+
 };
